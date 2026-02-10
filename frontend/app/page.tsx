@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { loginUser, registerUser } from "../lib/authApi";
+import { DASHBOARD_ROUTE } from "../lib/constants";
 
 type ActiveTab = "login" | "register";
 
@@ -10,6 +12,7 @@ interface FieldErrors {
 }
 
 export default function AuthPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<ActiveTab>("login");
 
   const [registerForm, setRegisterForm] = useState({
@@ -157,11 +160,12 @@ export default function AuthPage() {
             localStorage.setItem("authUser", JSON.stringify(response.user));
           }
         }
+
+        router.push(DASHBOARD_ROUTE);
       }
 
       setGlobalMessageType("success");
       setGlobalMessage("Login successful.");
-      // TODO: navigate to dashboard/tasks page when implemented
     } catch (error: any) {
       const message =
         error?.response?.data?.message || "Login failed. Please try again.";
@@ -182,7 +186,7 @@ export default function AuthPage() {
 
   const labelClass = "block text-sm font-medium text-gray-700 mb-1";
   const inputClass =
-    "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500";
+    "w-full rounded-lg border border-black-600 px-3 py-2 text-sm shadow-sm focus:border-black-700 focus:outline-none focus:ring-1 focus:ring-black-700 text-gray-800 placeholder-gray-400";
   const errorTextClass = "mt-1 text-xs text-red-500";
 
   return (
@@ -224,8 +228,8 @@ export default function AuthPage() {
         {globalMessage && (
           <div
             className={`mb-4 rounded-lg px-3 py-2 text-xs ${globalMessageType === "success"
-                ? "bg-emerald-50 text-emerald-700"
-                : "bg-red-50 text-red-700"
+              ? "bg-emerald-50 text-emerald-700"
+              : "bg-red-50 text-red-700"
               }`}
           >
             {globalMessage}
@@ -236,7 +240,7 @@ export default function AuthPage() {
           <form className="space-y-4" onSubmit={handleRegisterSubmit}>
             <div>
               <label className={labelClass} htmlFor="fullName">
-                Full Name<span className="text-red-500"> *</span>
+                Full Namefd<span className="text-red-500"> *</span>
               </label>
               <input
                 id="fullName"
@@ -258,7 +262,7 @@ export default function AuthPage() {
 
             <div>
               <label className={labelClass} htmlFor="email">
-                Email Address<span className="text-red-500"> *</span>
+                Email Addressdd<span className="text-red-500"> *</span>
               </label>
               <input
                 id="email"
@@ -392,7 +396,7 @@ export default function AuthPage() {
           <form className="space-y-4" onSubmit={handleLoginSubmit}>
             <div>
               <label className={labelClass} htmlFor="loginEmail">
-                Email Address<span className="text-red-500"> *</span>
+                Email Addressdd<span className="text-red-500"> *</span>
               </label>
               <input
                 id="loginEmail"
