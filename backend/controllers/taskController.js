@@ -1,6 +1,9 @@
 const Task = require("../models/Task");
 const { sendPushToUser } = require("../utils/pushService");
 
+const VALID_STATUSES = ["Pending", "Completed"];
+const VALID_PRIORITIES = ["Low", "Medium", "High", "Urgent"];
+
 const emitToUser = (req, eventName, payload) => {
   const io = req.app.get("io");
   const userId = req.user?.id;
@@ -11,6 +14,13 @@ const emitToUser = (req, eventName, payload) => {
 
   io.to(`user:${userId}`).emit(eventName, payload);
 };
+
+const normaliseStatus = (status) =>
+  status === "Completed" ? "Completed" : "Pending";
+
+const isValidPriority = (priority) => VALID_PRIORITIES.includes(priority);
+
+const toOptionalDate = (value) => (value ? new Date(value) : undefined);
 
 exports.createTask = async (req, res) => {
   const { title, description, status, priority, dueDate } = req.body;
@@ -24,12 +34,9 @@ exports.createTask = async (req, res) => {
     const task = new Task({
       title: title.trim(),
       description: description ? description.trim() : "",
-      status: status === "Completed" ? "Completed" : "Pending",
-      priority:
-        priority && ["Low", "Medium", "High", "Urgent"].includes(priority)
-          ? priority
-          : "Medium",
-      dueDate: dueDate ? new Date(dueDate) : undefined,
+      status: normaliseStatus(status),
+      priority: priority && isValidPriority(priority) ? priority : "Medium",
+      dueDate: toOptionalDate(dueDate),
       user: userId,
     });
     await task.save();
@@ -80,18 +87,20 @@ exports.updateTask = async (req, res) => {
 
     const previousStatus = task.status;
 
-    if (title !== undefined) task.title = title.trim();
-    if (description !== undefined) task.description = description.trim();
-    if (status !== undefined && ["Pending", "Completed"].includes(status)) {
+    if (title !== undefined) {
+      task.title = title.trim();
+    }
+    if (description !== undefined) {
+      task.description = description.trim();
+    }
+    if (status !== undefined && VALID_STATUSES.includes(status)) {
       task.status = status;
     }
-    if (priority !== undefined) {
-      if (["Low", "Medium", "High", "Urgent"].includes(priority)) {
-        task.priority = priority;
-      }
+    if (priority !== undefined && isValidPriority(priority)) {
+      task.priority = priority;
     }
     if (dueDate !== undefined) {
-      task.dueDate = dueDate ? new Date(dueDate) : undefined;
+      task.dueDate = toOptionalDate(dueDate);
     }
     await task.save();
 
