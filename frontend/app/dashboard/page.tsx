@@ -110,7 +110,29 @@ export default function DashboardPage() {
       try {
         const data = await fetchTasks();
         setTasks(data);
+        if (typeof window !== "undefined") {
+          try {
+            window.localStorage.setItem("taskflow.tasks", JSON.stringify(data));
+          } catch {
+            // Best-effort: offline cache should never break the main flow.
+          }
+        }
       } catch (error) {
+        if (typeof window !== "undefined") {
+          const cachedTasks = window.localStorage.getItem("taskflow.tasks");
+          if (cachedTasks) {
+            try {
+              const parsedTasks = JSON.parse(cachedTasks) as Task[];
+              setTasks(parsedTasks);
+              setLoadError(
+                "You appear to be offline or the server is unavailable. Showing your last available tasks.",
+              );
+              return;
+            } catch {
+              // Ignore parse errors and fall back to generic error handling.
+            }
+          }
+        }
         setLoadError("Unable to load tasks. Please try again.");
       } finally {
         setIsLoading(false);
