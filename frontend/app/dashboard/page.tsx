@@ -11,6 +11,7 @@ import {
   Menu,
   Search,
   SortAsc,
+  Clock3,
 } from "lucide-react";
 import {
   Task,
@@ -31,7 +32,8 @@ import { TaskCard } from "../../components/tasks/TaskCard";
 import { logoutUser, type AuthUser } from "../../lib/authApi";
 
 const NAV_ITEMS = [
-  { id: "my-tasks", label: "My Tasks", icon: LayoutList },
+  { id: "my-tasks", label: "All Tasks", icon: LayoutList },
+  { id: "in-progress", label: "In Progress", icon: Clock3 },
   { id: "completed", label: "Completed", icon: CheckCircle2 },
 ] as const;
 
@@ -196,21 +198,21 @@ export default function DashboardPage() {
     }
   };
 
-  const handleToggleStatus = useCallback(async (task: Task) => {
-    const nextStatus: TaskStatus =
-      task.status === "completed" ? "pending" : "completed";
-    try {
-      const updated = await updateTask(task.id, {
-        status: nextStatus,
-        title: ""
-      });
-      setTasks((prev) =>
-        prev.map((item) => (item.id === updated.id ? updated : item)),
-      );
-    } catch {
-      // Soft-fail: avoid breaking UX on single failure
-    }
-  }, []);
+  const handleStatusChange = useCallback(
+    async (task: Task, status: TaskStatus) => {
+      try {
+        const updated = await updateTask(task.id, {
+          status,
+        });
+        setTasks((prev) =>
+          prev.map((item) => (item.id === updated.id ? updated : item)),
+        );
+      } catch {
+        // Soft-fail: avoid breaking UX on single failure
+      }
+    },
+    [],
+  );
 
   const handleLogout = useCallback(() => {
     logoutUser();
@@ -241,34 +243,43 @@ export default function DashboardPage() {
     });
   };
 
-  const statusLabelFor = (status: TaskStatus): string =>
-    status === "completed" ? "Completed" : "Pending";
+  const { activeCount, pendingCount, inProgressCount, completedCount, filteredTasks } =
+    useMemo(() => {
+      const pending = tasks.filter((task) => task.status === "pending").length;
+      const inProgress = tasks.filter(
+        (task) => task.status === "in-progress",
+      ).length;
+      const completed = tasks.filter(
+        (task) => task.status === "completed",
+      ).length;
 
-  const { activeCount, completedCount, filteredTasks } = useMemo(() => {
-    const active = tasks.filter((task) => task.status === "pending").length;
-    const completed = tasks.filter((task) => task.status === "completed").length;
+      const active = pending + inProgress;
 
-    const normalizedSearch = searchTerm.trim().toLowerCase();
+      const normalizedSearch = searchTerm.trim().toLowerCase();
 
-    const tasksForNav =
-      activeNavId === "completed"
-        ? tasks.filter((task) => task.status === "completed")
-        : tasks;
+      let tasksForNav = tasks;
+      if (activeNavId === "completed") {
+        tasksForNav = tasks.filter((task) => task.status === "completed");
+      } else if (activeNavId === "in-progress") {
+        tasksForNav = tasks.filter((task) => task.status === "in-progress");
+      }
 
-    const filtered = tasksForNav.filter((task) => {
-      if (!normalizedSearch) return true;
-      return (
-        task.title.toLowerCase().includes(normalizedSearch) ||
-        task.description.toLowerCase().includes(normalizedSearch)
-      );
-    });
+      const filtered = tasksForNav.filter((task) => {
+        if (!normalizedSearch) return true;
+        return (
+          task.title.toLowerCase().includes(normalizedSearch) ||
+          task.description.toLowerCase().includes(normalizedSearch)
+        );
+      });
 
-    return {
-      activeCount: active,
-      completedCount: completed,
-      filteredTasks: filtered,
-    };
-  }, [activeNavId, searchTerm, tasks]);
+      return {
+        activeCount: active,
+        pendingCount: pending,
+        inProgressCount: inProgress,
+        completedCount: completed,
+        filteredTasks: filtered,
+      };
+    }, [activeNavId, searchTerm, tasks]);
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
@@ -403,7 +414,8 @@ export default function DashboardPage() {
                   My Tasks
                 </h1>
                 <p className="mt-1 text-xs text-slate-500">
-                  {activeCount} active, {completedCount} completed
+                  {pendingCount} pending, {inProgressCount} in progress,{" "}
+                  {completedCount} completed
                 </p>
               </div>
               <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -465,6 +477,17 @@ export default function DashboardPage() {
 
             {/* Tasks list */}
             <section className="space-y-3">
+              {!isLoading && !loadError && filteredTasks.length > 0 && (
+                <div className="mt-2 hidden items-center justify-between px-1 text-[11px] font-medium text-slate-400 sm:flex">
+                  <span className="flex-1 pl-9">Task</span>
+                  <div className="flex w-56 justify-end gap-3 pr-1">
+                    <span className="w-20 text-right">Status</span>
+                    <span className="w-20 text-right">Priority</span>
+                    <span className="w-20 text-right">Due date</span>
+                  </div>
+                </div>
+              )}
+
               {isLoading && (
                 <div className="mt-6 rounded-2xl border border-slate-100 bg-white/90 px-6 py-8 text-center text-xs text-slate-500 shadow-sm">
                   Loading your tasks...
@@ -483,9 +506,10 @@ export default function DashboardPage() {
                   <TaskCard
                     key={task.id}
                     task={task}
-                    statusLabel={statusLabelFor(task.status)}
                     dueLabel={formatDueLabel(task)}
-                    onToggleStatus={(item) => void handleToggleStatus(item)}
+                    onStatusChange={(item, status) =>
+                      void handleStatusChange(item, status)
+                    }
                     onOpen={(item) => openEditModal(item)}
                   />
                 ))}
