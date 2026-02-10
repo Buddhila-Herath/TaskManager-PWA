@@ -1,7 +1,7 @@
-import axios, { AxiosRequestConfig } from "axios";
+import axios, { AxiosRequestHeaders } from "axios";
 import { API_BASE_URL } from "./constants";
 
-export type TaskStatus = "pending" | "completed";
+export type TaskStatus = "pending" | "in-progress" | "completed";
 export type TaskPriority = "Low" | "Medium" | "High" | "Urgent";
 
 export interface Task {
@@ -15,9 +15,9 @@ export interface Task {
   updatedAt: string;
 }
 
-type ApiTaskStatus = "Pending" | "Completed";
+export type ApiTaskStatus = "Pending" | "In Progress" | "Completed";
 
-interface ApiTask {
+export interface ApiTask {
   _id: string;
   title: string;
   description?: string;
@@ -36,35 +36,48 @@ export interface TaskInput {
   dueDate?: string | null;
 }
 
-const client = axios.create({
+export interface TaskUpdateInput {
+  title?: string;
+  description?: string;
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  dueDate?: string | null;
+}
+
+export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-client.interceptors.request.use((config: AxiosRequestConfig) => {
+apiClient.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const token = window.localStorage.getItem("authToken");
     if (token) {
-      config.headers = {
-        ...config.headers,
-        Authorization: `Bearer ${token}`,
-      };
+      if (!config.headers) {
+        config.headers = {} as AxiosRequestHeaders;
+      }
+      (config.headers as AxiosRequestHeaders).Authorization = `Bearer ${token}`;
     }
   }
   return config;
 });
 
-const mapStatusFromApi = (status: ApiTaskStatus): TaskStatus =>
-  status === "Completed" ? "completed" : "pending";
+const mapStatusFromApi = (status: ApiTaskStatus): TaskStatus => {
+  if (status === "Completed") return "completed";
+  if (status === "In Progress") return "in-progress";
+  return "pending";
+};
 
 const mapStatusToApi = (status?: TaskStatus): ApiTaskStatus | undefined => {
   if (!status) return undefined;
-  return status === "completed" ? "Completed" : "Pending";
+  if (status === "completed") return "Completed";
+  if (status === "in-progress") return "In Progress";
+  return "Pending";
 };
 
-const mapTaskFromApi = (task: ApiTask): Task => ({
+export const mapTaskFromApi = (task: ApiTask): Task => ({
   id: task._id,
   title: task.title,
   description: task.description ?? "",
@@ -76,7 +89,7 @@ const mapTaskFromApi = (task: ApiTask): Task => ({
 });
 
 export const fetchTasks = async (): Promise<Task[]> => {
-  const response = await client.get<ApiTask[]>("/api/tasks");
+  const response = await apiClient.get<ApiTask[]>("/api/tasks");
   return response.data.map(mapTaskFromApi);
 };
 
@@ -99,13 +112,13 @@ export const createTask = async (input: TaskInput): Promise<Task> => {
     payload.dueDate = input.dueDate;
   }
 
-  const response = await client.post<ApiTask>("/api/tasks", payload);
+  const response = await apiClient.post<ApiTask>("/api/tasks", payload);
   return mapTaskFromApi(response.data);
 };
 
 export const updateTask = async (
   id: string,
-  input: TaskInput
+  input: TaskUpdateInput
 ): Promise<Task> => {
   const payload: Record<string, unknown> = {};
 
@@ -126,11 +139,11 @@ export const updateTask = async (
     payload.dueDate = input.dueDate;
   }
 
-  const response = await client.put<ApiTask>(`/api/tasks/${id}`, payload);
+  const response = await apiClient.put<ApiTask>(`/api/tasks/${id}`, payload);
   return mapTaskFromApi(response.data);
 };
 
 export const deleteTask = async (id: string): Promise<void> => {
-  await client.delete(`/api/tasks/${id}`);
+  await apiClient.delete(`/api/tasks/${id}`);
 };
 

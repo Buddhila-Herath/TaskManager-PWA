@@ -1,16 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
+  AlertCircle,
   CheckCircle2,
   CheckSquare2,
   Circle,
   LayoutList,
+  LogOut,
   Menu,
   Search,
   SortAsc,
+  Clock3,
 } from "lucide-react";
+import { io, type Socket } from "socket.io-client";
 import {
+  type ApiTask,
   Task,
   TaskStatus,
   TaskInput,
@@ -18,6 +24,7 @@ import {
   createTask,
   updateTask,
   deleteTask,
+  mapTaskFromApi,
 } from "../../lib/taskApi";
 import {
   TaskModal,
@@ -26,13 +33,19 @@ import {
   type ModalMode,
 } from "../../components/tasks/TaskModal";
 import { TaskCard } from "../../components/tasks/TaskCard";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
+import { logoutUser, type AuthUser } from "../../lib/authApi";
+import { API_BASE_URL } from "../../lib/constants";
+import { subscribeToPush } from "../../lib/pushApi";
 
 const NAV_ITEMS = [
-  { id: "my-tasks", label: "My Tasks", icon: LayoutList },
+  { id: "my-tasks", label: "All Tasks", icon: LayoutList },
+  { id: "in-progress", label: "In Progress", icon: Clock3 },
   { id: "completed", label: "Completed", icon: CheckCircle2 },
 ] as const;
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeNavId, setActiveNavId] = useState<(typeof NAV_ITEMS)[number]["id"]>(
     "my-tasks",
@@ -41,6 +54,7 @@ export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<ModalMode>("create");
@@ -53,8 +67,43 @@ export default function DashboardPage() {
   });
   const [formErrors, setFormErrors] = useState<TaskFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [taskPendingDelete, setTaskPendingDelete] = useState<Task | null>(null);
+  const [toast, setToast] = useState<{
+    id: number;
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  const showToast = useCallback((type: "success" | "error", message: string) => {
+    const id = Date.now();
+    setToast({ id, type, message });
+    setTimeout(() => {
+      setToast((current) => (current && current.id === id ? null : current));
+    }, 3000);
+  }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const token = window.localStorage.getItem("authToken");
+    const storedUser = window.localStorage.getItem("authUser");
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser) as AuthUser;
+        setAuthUser(parsedUser);
+      } catch {
+        // ignore parse errors
+      }
+    }
+    if (!token) {
+      router.replace("/");
+      return;
+    }
+
     const load = async () => {
       setIsLoading(true);
       setLoadError(null);
@@ -69,6 +118,68 @@ export default function DashboardPage() {
     };
 
     void load();
+    void subscribeToPush().catch(() => {
+      // Best-effort: push is an enhancement and should not block the dashboard.
+    });
+  }, [router]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const token = window.localStorage.getItem("authToken");
+    if (!token) {
+      return;
+    }
+
+    const socketUrl = (process.env.NEXT_PUBLIC_WS_URL ?? API_BASE_URL).replace(
+      /\/+$/,
+      "",
+    );
+
+    const socket: Socket = io(socketUrl, {
+      transports: ["websocket"],
+    });
+
+    socket.on("connect", () => {
+      setIsRealtimeConnected(true);
+      socket.emit("authenticate", token);
+    });
+
+    socket.on("disconnect", () => {
+      setIsRealtimeConnected(false);
+    });
+
+    socket.on("task_created", (payload: ApiTask) => {
+      const created = mapTaskFromApi(payload);
+      setTasks((prev) => {
+        if (prev.some((task) => task.id === created.id)) {
+          return prev;
+        }
+        return [created, ...prev];
+      });
+    });
+
+    socket.on("task_updated", (payload: ApiTask) => {
+      const updated = mapTaskFromApi(payload);
+      setTasks((prev) =>
+        prev.map((task) => (task.id === updated.id ? updated : task)),
+      );
+    });
+
+    socket.on("task_deleted", (payload: { id: string }) => {
+      setTasks((prev) => prev.filter((task) => task.id !== payload.id));
+    });
+
+    socket.on("auth_error", () => {
+      // If auth fails, we simply stop listening on this socket instance.
+      socket.disconnect();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const openCreateModal = useCallback(() => {
@@ -136,12 +247,22 @@ export default function DashboardPage() {
     try {
       if (modalMode === "create") {
         const created = await createTask(input);
-        setTasks((prev) => [created, ...prev]);
+        setTasks((prev) => {
+          const exists = prev.some((task) => task.id === created.id);
+          if (exists) {
+            return prev.map((task) =>
+              task.id === created.id ? created : task,
+            );
+          }
+          return [created, ...prev];
+        });
+        showToast("success", "Task created successfully.");
       } else if (selectedTask) {
         const updated = await updateTask(selectedTask.id, input);
         setTasks((prev) =>
           prev.map((task) => (task.id === updated.id ? updated : task)),
         );
+        showToast("success", "Task updated successfully.");
       }
       setIsModalOpen(false);
     } catch {
@@ -151,43 +272,74 @@ export default function DashboardPage() {
           prev.title ??
           "Something went wrong while saving the task. Please try again.",
       }));
+      showToast(
+        "error",
+        "Something went wrong while saving the task. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDeleteTask = async (task: Task) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this task?",
-    );
-    if (!confirmDelete) return;
-
     try {
       await deleteTask(task.id);
       setTasks((prev) => prev.filter((item) => item.id !== task.id));
       if (selectedTask?.id === task.id) {
         setIsModalOpen(false);
       }
+      showToast("success", "Task deleted successfully.");
     } catch {
-      // Soft-fail: could surface toast/error UI in future
+      showToast("error", "Unable to delete the task. Please try again.");
     }
   };
 
-  const handleToggleStatus = useCallback(async (task: Task) => {
-    const nextStatus: TaskStatus =
-      task.status === "completed" ? "pending" : "completed";
-    try {
-      const updated = await updateTask(task.id, {
-        status: nextStatus,
-        title: ""
-      });
-      setTasks((prev) =>
-        prev.map((item) => (item.id === updated.id ? updated : item)),
-      );
-    } catch {
-      // Soft-fail: avoid breaking UX on single failure
-    }
+  const handleStatusChange = useCallback(
+    async (task: Task, status: TaskStatus) => {
+      try {
+        const updated = await updateTask(task.id, {
+          status,
+        });
+        setTasks((prev) =>
+          prev.map((item) => (item.id === updated.id ? updated : item)),
+        );
+        const label =
+          status === "completed"
+            ? "marked as completed"
+            : status === "in-progress"
+              ? "moved to In Progress"
+              : "set to Pending";
+        showToast("success", `Task "${task.title}" ${label}.`);
+      } catch {
+        showToast("error", "Unable to update task status. Please try again.");
+      }
+    },
+    [showToast],
+  );
+
+  const openDeleteConfirm = useCallback((task: Task) => {
+    setTaskPendingDelete(task);
+    setIsDeleteConfirmOpen(true);
   }, []);
+
+  const handleLogout = useCallback(() => {
+    logoutUser();
+    router.push("/");
+  }, [router]);
+
+  const handleProfileClick = useCallback(() => {
+    router.push("/profile");
+  }, [router]);
+
+  const profileInitials =
+    (authUser?.userName &&
+      authUser.userName
+        .split(" ")
+        .filter(Boolean)
+        .map((part) => part[0])
+        .join("")
+        .toUpperCase()) ||
+    (authUser?.email?.[0]?.toUpperCase() ?? "U");
 
   const formatDueLabel = (task: Task): string => {
     if (!task.dueDate) return "No due date";
@@ -199,37 +351,78 @@ export default function DashboardPage() {
     });
   };
 
-  const statusLabelFor = (status: TaskStatus): string =>
-    status === "completed" ? "Completed" : "Pending";
+  const { activeCount, pendingCount, inProgressCount, completedCount, filteredTasks } =
+    useMemo(() => {
+      const pending = tasks.filter((task) => task.status === "pending").length;
+      const inProgress = tasks.filter(
+        (task) => task.status === "in-progress",
+      ).length;
+      const completed = tasks.filter(
+        (task) => task.status === "completed",
+      ).length;
 
-  const { activeCount, completedCount, filteredTasks } = useMemo(() => {
-    const active = tasks.filter((task) => task.status === "pending").length;
-    const completed = tasks.filter((task) => task.status === "completed").length;
+      const active = pending + inProgress;
 
-    const normalizedSearch = searchTerm.trim().toLowerCase();
+      const normalizedSearch = searchTerm.trim().toLowerCase();
 
-    const tasksForNav =
-      activeNavId === "completed"
-        ? tasks.filter((task) => task.status === "completed")
-        : tasks;
+      let tasksForNav = tasks;
+      if (activeNavId === "completed") {
+        tasksForNav = tasks.filter((task) => task.status === "completed");
+      } else if (activeNavId === "in-progress") {
+        tasksForNav = tasks.filter((task) => task.status === "in-progress");
+      }
 
-    const filtered = tasksForNav.filter((task) => {
-      if (!normalizedSearch) return true;
-      return (
-        task.title.toLowerCase().includes(normalizedSearch) ||
-        task.description.toLowerCase().includes(normalizedSearch)
-      );
-    });
+      const filtered = tasksForNav.filter((task) => {
+        if (!normalizedSearch) return true;
+        return (
+          task.title.toLowerCase().includes(normalizedSearch) ||
+          task.description.toLowerCase().includes(normalizedSearch)
+        );
+      });
 
-    return {
-      activeCount: active,
-      completedCount: completed,
-      filteredTasks: filtered,
-    };
-  }, [activeNavId, searchTerm, tasks]);
+      return {
+        activeCount: active,
+        pendingCount: pending,
+        inProgressCount: inProgress,
+        completedCount: completed,
+        filteredTasks: filtered,
+      };
+    }, [activeNavId, searchTerm, tasks]);
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
+      {toast && (
+        <div className="pointer-events-none fixed right-4 top-4 z-50 flex max-w-xs flex-col gap-2">
+          <div
+            className={`pointer-events-auto flex items-start gap-3 rounded-2xl border px-4 py-3 text-xs shadow-lg ${
+              toast.type === "success"
+                ? "border-emerald-100 bg-emerald-50/95 text-emerald-800"
+                : "border-red-100 bg-red-50/95 text-red-700"
+            }`}
+          >
+            <div className="mt-0.5">
+              {toast.type === "success" ? (
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              ) : (
+                <AlertCircle className="h-4 w-4 text-red-500" />
+              )}
+            </div>
+            <div className="flex-1">
+              <p className="text-[11px] font-semibold">
+                {toast.type === "success" ? "Success" : "Something went wrong"}
+              </p>
+              <p className="mt-0.5 text-[11px] leading-snug">{toast.message}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              className="ml-1 rounded-full px-1.5 py-0.5 text-[11px] font-medium text-slate-400 transition hover:bg-white/60 hover:text-slate-600"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
       {/* Sidebar */}
       <aside
         className={`hidden border-r border-slate-200 bg-white/80 backdrop-blur-sm transition-all duration-300 ease-in-out md:flex md:flex-col ${isSidebarCollapsed ? "w-20" : "w-64"
@@ -281,17 +474,16 @@ export default function DashboardPage() {
         </nav>
 
         <div className="border-t border-slate-200 px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
-              TF
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-xs font-semibold text-red-700">
+              <LogOut className="h-4 w-4" />
             </div>
-            {!isSidebarCollapsed && (
-              <div>
-                <p className="text-xs font-medium text-slate-800">Alex Johnson</p>
-                <p className="text-[11px] text-slate-400">Product Manager</p>
-              </div>
-            )}
-          </div>
+            {!isSidebarCollapsed && <span>Logout</span>}
+          </button>
         </div>
       </aside>
 
@@ -328,14 +520,34 @@ export default function DashboardPage() {
 
           <div className="flex items-center gap-5">
             <div className="flex items-center gap-1 text-xs text-emerald-600">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              <span className="font-medium">Synced</span>
-              <span className="text-slate-400">• Online</span>
+              <span
+                className={`h-2 w-2 rounded-full ${isRealtimeConnected ? "bg-emerald-500" : "bg-slate-300"
+                  }`}
+              />
+              <span className="font-medium">
+                {isRealtimeConnected ? "Synced" : "Connecting"}
+              </span>
+              <span className="text-slate-400">
+                {isRealtimeConnected ? "• Online" : "• Realtime"}
+              </span>
             </div>
             <div className="hidden h-8 w-px bg-slate-200 md:block" />
-            <div className="hidden h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-semibold text-white md:flex">
-              AJ
-            </div>
+            <button
+              type="button"
+              onClick={handleProfileClick}
+              className="hidden h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-semibold text-white md:flex overflow-hidden"
+            >
+              {authUser?.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={authUser.avatarUrl}
+                  alt="Profile"
+                  className="h-full w-full rounded-full object-cover"
+                />
+              ) : (
+                profileInitials
+              )}
+            </button>
           </div>
         </header>
 
@@ -349,7 +561,8 @@ export default function DashboardPage() {
                   My Tasks
                 </h1>
                 <p className="mt-1 text-xs text-slate-500">
-                  {activeCount} active, {completedCount} completed
+                  {pendingCount} pending, {inProgressCount} in progress,{" "}
+                  {completedCount} completed
                 </p>
               </div>
               <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -411,6 +624,17 @@ export default function DashboardPage() {
 
             {/* Tasks list */}
             <section className="space-y-3">
+              {!isLoading && !loadError && filteredTasks.length > 0 && (
+                <div className="mt-2 hidden items-center justify-between px-1 text-[11px] font-medium text-slate-400 sm:flex">
+                  <span className="flex-1 pl-9">Task</span>
+                  <div className="flex w-56 justify-end gap-3 pr-1">
+                    <span className="w-20 text-right">Status</span>
+                    <span className="w-20 text-right">Priority</span>
+                    <span className="w-20 text-right">Due date</span>
+                  </div>
+                </div>
+              )}
+
               {isLoading && (
                 <div className="mt-6 rounded-2xl border border-slate-100 bg-white/90 px-6 py-8 text-center text-xs text-slate-500 shadow-sm">
                   Loading your tasks...
@@ -429,9 +653,10 @@ export default function DashboardPage() {
                   <TaskCard
                     key={task.id}
                     task={task}
-                    statusLabel={statusLabelFor(task.status)}
                     dueLabel={formatDueLabel(task)}
-                    onToggleStatus={(item) => void handleToggleStatus(item)}
+                    onStatusChange={(item, status) =>
+                      void handleStatusChange(item, status)
+                    }
                     onOpen={(item) => openEditModal(item)}
                   />
                 ))}
@@ -458,9 +683,27 @@ export default function DashboardPage() {
         onSubmit={handleSubmit}
         onDelete={
           modalMode === "edit" && selectedTask
-            ? () => void handleDeleteTask(selectedTask)
+            ? () => openDeleteConfirm(selectedTask)
             : undefined
         }
+      />
+
+      <ConfirmDialog
+        open={isDeleteConfirmOpen}
+        title="Delete task?"
+        description={`Are you sure you want to delete "${taskPendingDelete?.title ?? "this task"
+          }"? This action cannot be undone.`}
+        confirmLabel="Delete task"
+        cancelLabel="Cancel"
+        onCancel={() => {
+          setIsDeleteConfirmOpen(false);
+        }}
+        onConfirm={() => {
+          if (taskPendingDelete) {
+            void handleDeleteTask(taskPendingDelete);
+          }
+          setIsDeleteConfirmOpen(false);
+        }}
       />
     </div>
   );

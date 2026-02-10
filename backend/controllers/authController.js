@@ -7,6 +7,15 @@ const buildJwtPayload = (user) => ({
   role: user.role || "user",
 });
 
+const buildUserResponse = (user) => ({
+  id: user._id,
+  email: user.email,
+  role: user.role,
+  userName: user.userName,
+  mobile: user.mobile,
+  avatarUrl: user.avatarUrl || "",
+});
+
 exports.register = async (req, res) => {
   const { email, password, mobile, userName, role } = req.body;
 
@@ -44,11 +53,7 @@ exports.register = async (req, res) => {
 
     res.status(201).json({
       token,
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-      },
+      user: buildUserResponse(user),
     });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
@@ -70,11 +75,7 @@ exports.login = async (req, res) => {
 
     res.json({
       token,
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-      },
+      user: buildUserResponse(user),
     });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
@@ -124,7 +125,7 @@ exports.currentUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.json(user);
+    res.json(buildUserResponse(user));
   } catch (err) {
     res.status(401).json({ message: "Token is not valid" });
   }
@@ -133,6 +134,64 @@ exports.currentUser = async (req, res) => {
 exports.logout = async (req, res) => {
   try {
     res.json({ message: "Logout success" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(buildUserResponse(user));
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  const { email, userName, mobile, avatarUrl } = req.body;
+
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (email && email !== user.email) {
+      const emailExists = await User.findOne({ email });
+      if (emailExists) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+      user.email = email;
+    }
+
+    if (userName && userName !== user.userName) {
+      const userNameExists = await User.findOne({ userName });
+      if (userNameExists) {
+        return res.status(400).json({ message: "User Name already exists" });
+      }
+      user.userName = userName;
+    }
+
+    if (mobile && mobile !== user.mobile) {
+      const mobileExists = await User.findOne({ mobile });
+      if (mobileExists) {
+        return res.status(400).json({ message: "Mobile already exists" });
+      }
+      user.mobile = mobile;
+    }
+
+    if (typeof avatarUrl === "string") {
+      user.avatarUrl = avatarUrl;
+    }
+
+    await user.save();
+
+    res.json(buildUserResponse(user));
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }

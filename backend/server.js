@@ -9,6 +9,7 @@ const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const pushRoutes = require('./routes/pushRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const { startTaskReminderScheduler } = require('./utils/reminderScheduler');
 
 const app = express();
 const server = http.createServer(app);
@@ -65,6 +66,7 @@ mongoose
   .connect(MONGODB_URI)
   .then(() => {
     console.log('MongoDB connected');
+    startTaskReminderScheduler();
   })
   .catch((err) => {
     console.warn('MongoDB connection failed (optional):', err.message);

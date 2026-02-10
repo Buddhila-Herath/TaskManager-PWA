@@ -6,9 +6,8 @@ import type { Task, TaskStatus } from "../../lib/taskApi";
 
 interface TaskCardProps {
   task: Task;
-  statusLabel: string;
   dueLabel: string;
-  onToggleStatus: (task: Task) => void;
+  onStatusChange: (task: Task, status: TaskStatus) => void;
   onOpen: (task: Task) => void;
 }
 
@@ -19,18 +18,29 @@ const priorityClasses: Record<Task["priority"], string> = {
   Low: "bg-slate-50 text-slate-500",
 };
 
-const statusClasses: Record<TaskStatus, string> = {
-  completed: "bg-emerald-50 text-emerald-700",
-  pending: "bg-slate-50 text-slate-600",
+const statusSelectClasses: Record<TaskStatus, string> = {
+  pending:
+    "border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 hover:bg-slate-100",
+  "in-progress":
+    "border-sky-200 bg-sky-50 text-sky-600 hover:border-sky-300 hover:bg-sky-100",
+  completed:
+    "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100",
+};
+
+const statusLabel: Record<TaskStatus, string> = {
+  pending: "Pending",
+  "in-progress": "In Progress",
+  completed: "Completed",
 };
 
 function TaskCardComponent({
   task,
-  statusLabel,
   dueLabel,
-  onToggleStatus,
+  onStatusChange,
   onOpen,
 }: TaskCardProps) {
+  const isCompleted = task.status === "completed";
+
   return (
     <article
       className="group cursor-pointer rounded-2xl border border-slate-100 bg-white/90 px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-100 hover:shadow-md sm:px-5"
@@ -42,27 +52,34 @@ function TaskCardComponent({
             type="button"
             onClick={(event) => {
               event.stopPropagation();
-              onToggleStatus(task);
+              const nextStatus: TaskStatus =
+                task.status === "pending"
+                  ? "in-progress"
+                  : task.status === "in-progress"
+                    ? "completed"
+                    : "pending";
+              onStatusChange(task, nextStatus);
             }}
             className="mt-0.5 flex h-5 w-5 items-center justify-center rounded border border-slate-300 bg-white text-slate-400 transition group-hover:border-indigo-200 group-hover:text-indigo-500"
-            aria-label={
-              task.status === "completed"
-                ? "Mark task as pending"
-                : "Mark task as completed"
-            }
+            aria-label="Change task status"
           >
-            {task.status === "completed" ? (
+            {isCompleted ? (
               <CheckSquare2 className="h-3.5 w-3.5" />
             ) : (
               <Circle className="h-3.5 w-3.5" />
             )}
           </button>
-          <div className="min-w-0">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onOpen(task);
+            }}
+            className="min-w-0 text-left"
+          >
             <h2
               className={`truncate text-sm font-semibold ${
-                task.status === "completed"
-                  ? "text-slate-400 line-through"
-                  : "text-slate-900"
+                isCompleted ? "text-slate-400 line-through" : "text-slate-900"
               }`}
             >
               {task.title}
@@ -70,22 +87,27 @@ function TaskCardComponent({
             <p className="mt-1 line-clamp-2 text-xs text-slate-500">
               {task.description}
             </p>
-          </div>
+          </button>
         </div>
 
         <div className="flex flex-col items-end gap-2">
           <div className="flex flex-wrap items-center justify-end gap-1.5 text-[11px]">
-            <span
-              className={`rounded-full px-2 py-0.5 font-medium ${
-                statusClasses[task.status]
-              }`}
+            <select
+              value={task.status}
+              onClick={(event) => event.stopPropagation()}
+              onMouseDown={(event) => event.stopPropagation()}
+              onChange={(event) => {
+                event.stopPropagation();
+                onStatusChange(task, event.target.value as TaskStatus);
+              }}
+              className={`cursor-pointer rounded-full border px-2 py-0.5 text-[11px] font-medium outline-none transition ${statusSelectClasses[task.status]}`}
             >
-              {statusLabel}
-            </span>
+              <option value="pending">{statusLabel.pending}</option>
+              <option value="in-progress">{statusLabel["in-progress"]}</option>
+              <option value="completed">{statusLabel.completed}</option>
+            </select>
             <span
-              className={`rounded-full px-2 py-0.5 font-medium ${
-                priorityClasses[task.priority]
-              }`}
+              className={`rounded-full px-2 py-0.5 font-medium ${priorityClasses[task.priority]}`}
             >
               {task.priority}
             </span>
@@ -100,4 +122,3 @@ function TaskCardComponent({
 }
 
 export const TaskCard = memo(TaskCardComponent);
-
