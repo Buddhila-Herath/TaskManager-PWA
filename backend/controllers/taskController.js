@@ -13,7 +13,7 @@ const emitToUser = (req, eventName, payload) => {
 };
 
 exports.createTask = async (req, res) => {
-  const { title, description, status } = req.body;
+  const { title, description, status, priority, dueDate } = req.body;
   const userId = req.user.id;
 
   if (!title || !title.trim()) {
@@ -25,6 +25,11 @@ exports.createTask = async (req, res) => {
       title: title.trim(),
       description: description ? description.trim() : "",
       status: status === "Completed" ? "Completed" : "Pending",
+      priority:
+        priority && ["Low", "Medium", "High", "Urgent"].includes(priority)
+          ? priority
+          : "Medium",
+      dueDate: dueDate ? new Date(dueDate) : undefined,
       user: userId,
     });
     await task.save();
@@ -62,7 +67,7 @@ exports.getTasks = async (req, res) => {
 
 exports.updateTask = async (req, res) => {
   const { id } = req.params;
-  const { title, description, status } = req.body;
+  const { title, description, status, priority, dueDate } = req.body;
   const userId = req.user.id;
   const isAdmin = req.user.role === "admin";
 
@@ -79,6 +84,14 @@ exports.updateTask = async (req, res) => {
     if (description !== undefined) task.description = description.trim();
     if (status !== undefined && ["Pending", "Completed"].includes(status)) {
       task.status = status;
+    }
+    if (priority !== undefined) {
+      if (["Low", "Medium", "High", "Urgent"].includes(priority)) {
+        task.priority = priority;
+      }
+    }
+    if (dueDate !== undefined) {
+      task.dueDate = dueDate ? new Date(dueDate) : undefined;
     }
     await task.save();
 
