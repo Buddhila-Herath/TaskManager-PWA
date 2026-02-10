@@ -43,6 +43,15 @@ Node.js + Express API for the Task Manager PWA: auth, task CRUD, WebSocket (Sock
 
 Default port: 5000 (or `PORT` from `.env`). With Docker Compose the app often runs on 5002.
 
+## Default admin credentials
+
+| Field    | Value             |
+|----------|-------------------|
+| **Username (email)** | `admin@gmail.com` |
+| **Password**         | `123456`          |
+
+Use these to authenticate for admin-only routes under `/api/admin`.
+
 ## API Overview
 
 | Area | Routes |

@@ -8,6 +8,7 @@ A **Real-Time Task Management Progressive Web Application (PWA)** with instant s
 
 - [Overview](#overview)
 - [Setup Instructions](#setup-instructions)
+- [Default admin credentials](#6-default-admin-credentials)
 - [Tech Stack](#tech-stack)
 - [WebSocket & Notifications](#websocket--notifications)
 - [Environment Configuration (.env)](#environment-configuration-env)
@@ -111,6 +112,15 @@ Runs on **http://localhost:3000**.
 2. Register a user, then log in.
 3. Create/edit/delete tasks; list updates in real time.
 4. Optional: enable push (browser prompt) for notifications.
+
+### 6. Default admin credentials
+
+| Field    | Value             |
+|----------|-------------------|
+| **Username (email)** | `admin@gmail.com` |
+| **Password**         | `123456`          |
+
+Use these to log in as admin for admin-only routes and features.
 
 ---
 
