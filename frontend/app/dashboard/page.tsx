@@ -1,11 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
   CheckSquare2,
   Circle,
   LayoutList,
+  LogOut,
   Menu,
   Search,
   SortAsc,
@@ -26,6 +28,7 @@ import {
   type ModalMode,
 } from "../../components/tasks/TaskModal";
 import { TaskCard } from "../../components/tasks/TaskCard";
+import { logoutUser, type AuthUser } from "../../lib/authApi";
 
 const NAV_ITEMS = [
   { id: "my-tasks", label: "My Tasks", icon: LayoutList },
@@ -33,6 +36,7 @@ const NAV_ITEMS = [
 ] as const;
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [activeNavId, setActiveNavId] = useState<(typeof NAV_ITEMS)[number]["id"]>(
     "my-tasks",
@@ -53,8 +57,27 @@ export default function DashboardPage() {
   });
   const [formErrors, setFormErrors] = useState<TaskFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const token = window.localStorage.getItem("authToken");
+    const storedUser = window.localStorage.getItem("authUser");
+    if (storedUser) {
+      try {
+        setAuthUser(JSON.parse(storedUser) as AuthUser);
+      } catch {
+        // ignore parse errors
+      }
+    }
+    if (!token) {
+      router.replace("/");
+      return;
+    }
+
     const load = async () => {
       setIsLoading(true);
       setLoadError(null);
@@ -69,7 +92,7 @@ export default function DashboardPage() {
     };
 
     void load();
-  }, []);
+  }, [router]);
 
   const openCreateModal = useCallback(() => {
     setModalMode("create");
@@ -189,6 +212,25 @@ export default function DashboardPage() {
     }
   }, []);
 
+  const handleLogout = useCallback(() => {
+    logoutUser();
+    router.push("/");
+  }, [router]);
+
+  const handleProfileClick = useCallback(() => {
+    router.push("/profile");
+  }, [router]);
+
+  const profileInitials =
+    (authUser?.userName &&
+      authUser.userName
+        .split(" ")
+        .filter(Boolean)
+        .map((part) => part[0])
+        .join("")
+        .toUpperCase()) ||
+    (authUser?.email?.[0]?.toUpperCase() ?? "U");
+
   const formatDueLabel = (task: Task): string => {
     if (!task.dueDate) return "No due date";
     const date = new Date(task.dueDate);
@@ -281,17 +323,16 @@ export default function DashboardPage() {
         </nav>
 
         <div className="border-t border-slate-200 px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
-              TF
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-xs font-semibold text-red-700">
+              <LogOut className="h-4 w-4" />
             </div>
-            {!isSidebarCollapsed && (
-              <div>
-                <p className="text-xs font-medium text-slate-800">Alex Johnson</p>
-                <p className="text-[11px] text-slate-400">Product Manager</p>
-              </div>
-            )}
-          </div>
+            {!isSidebarCollapsed && <span>Logout</span>}
+          </button>
         </div>
       </aside>
 
@@ -333,9 +374,22 @@ export default function DashboardPage() {
               <span className="text-slate-400">• Online</span>
             </div>
             <div className="hidden h-8 w-px bg-slate-200 md:block" />
-            <div className="hidden h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-semibold text-white md:flex">
-              AJ
-            </div>
+            <button
+              type="button"
+              onClick={handleProfileClick}
+              className="hidden h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-semibold text-white md:flex overflow-hidden"
+            >
+              {authUser?.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={authUser.avatarUrl}
+                  alt="Profile"
+                  className="h-full w-full rounded-full object-cover"
+                />
+              ) : (
+                profileInitials
+              )}
+            </button>
           </div>
         </header>
 
