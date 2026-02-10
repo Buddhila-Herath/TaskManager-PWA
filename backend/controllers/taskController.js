@@ -49,8 +49,11 @@ exports.createTask = async (req, res) => {
 
 exports.getTasks = async (req, res) => {
   const userId = req.user.id;
+  const isAdmin = req.user.role === "admin";
+
   try {
-    const tasks = await Task.find({ user: userId }).sort({ updatedAt: -1 });
+    const query = isAdmin ? {} : { user: userId };
+    const tasks = await Task.find(query).sort({ updatedAt: -1 });
     res.json(tasks);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
@@ -61,9 +64,11 @@ exports.updateTask = async (req, res) => {
   const { id } = req.params;
   const { title, description, status } = req.body;
   const userId = req.user.id;
+  const isAdmin = req.user.role === "admin";
 
   try {
-    const task = await Task.findOne({ _id: id, user: userId });
+    const filter = isAdmin ? { _id: id } : { _id: id, user: userId };
+    const task = await Task.findOne(filter);
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
@@ -103,9 +108,11 @@ exports.updateTask = async (req, res) => {
 exports.deleteTask = async (req, res) => {
   const { id } = req.params;
   const userId = req.user.id;
+  const isAdmin = req.user.role === "admin";
 
   try {
-    const task = await Task.findOneAndDelete({ _id: id, user: userId });
+    const filter = isAdmin ? { _id: id } : { _id: id, user: userId };
+    const task = await Task.findOneAndDelete(filter);
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
