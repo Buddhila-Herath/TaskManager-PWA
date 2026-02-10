@@ -35,6 +35,7 @@ import { TaskCard } from "../../components/tasks/TaskCard";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { logoutUser, type AuthUser } from "../../lib/authApi";
 import { API_BASE_URL } from "../../lib/constants";
+import { subscribeToPush } from "../../lib/pushApi";
 
 const NAV_ITEMS = [
   { id: "my-tasks", label: "All Tasks", icon: LayoutList },
@@ -102,6 +103,9 @@ export default function DashboardPage() {
     };
 
     void load();
+    void subscribeToPush().catch(() => {
+      // Best-effort: push is an enhancement and should not block the dashboard.
+    });
   }, [router]);
 
   useEffect(() => {
