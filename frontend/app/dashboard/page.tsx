@@ -93,7 +93,8 @@ export default function DashboardPage() {
     const storedUser = window.localStorage.getItem("authUser");
     if (storedUser) {
       try {
-        setAuthUser(JSON.parse(storedUser) as AuthUser);
+        const parsedUser = JSON.parse(storedUser) as AuthUser;
+        setAuthUser(parsedUser);
       } catch {
         // ignore parse errors
       }

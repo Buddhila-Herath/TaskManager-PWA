@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginUser, registerUser } from "../lib/authApi";
-import { DASHBOARD_ROUTE } from "../lib/constants";
+import { ADMIN_DASHBOARD_ROUTE, DASHBOARD_ROUTE } from "../lib/constants";
 
 type ActiveTab = "login" | "register";
 
@@ -160,8 +160,10 @@ export default function AuthPage() {
             localStorage.setItem("authUser", JSON.stringify(response.user));
           }
         }
-
-        router.push(DASHBOARD_ROUTE);
+        const role = response.user?.role;
+        const targetRoute =
+          role === "admin" ? ADMIN_DASHBOARD_ROUTE : DASHBOARD_ROUTE;
+        router.push(targetRoute);
       }
 
       setGlobalMessageType("success");
