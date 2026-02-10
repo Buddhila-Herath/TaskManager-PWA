@@ -44,12 +44,22 @@ exports.createTask = async (req, res) => {
     emitToUser(req, "task_created", task);
 
     // Fire-and-forget push notification
+    // eslint-disable-next-line no-console
+    console.log("[push] createTask: sending push for task", {
+      userId,
+      taskId: task._id.toString(),
+      title: task.title,
+      status: task.status,
+      dueDate: task.dueDate,
+    });
     sendPushToUser(userId, {
       title: "New task created",
       body: task.title,
       data: {
         action: "task_created",
         taskId: task._id.toString(),
+        status: task.status,
+        dueDate: task.dueDate,
       },
     }).catch(() => {});
 
@@ -106,14 +116,50 @@ exports.updateTask = async (req, res) => {
 
     emitToUser(req, "task_updated", task);
 
+    // Fire-and-forget push notification for generic task updates.
+    // We send a dedicated notification when a task is marked as completed below,
+    // so this generic "updated" notification is only used for non-completed states.
+    if (task.status !== "Completed") {
+      // eslint-disable-next-line no-console
+      console.log("[push] updateTask: sending generic update push", {
+        userId,
+        taskId: task._id.toString(),
+        title: task.title,
+        previousStatus,
+        newStatus: task.status,
+        dueDate: task.dueDate,
+      });
+      sendPushToUser(userId, {
+        title: "Task updated",
+        body: task.title,
+        data: {
+          action: "task_updated",
+          taskId: task._id.toString(),
+          status: task.status,
+          dueDate: task.dueDate,
+        },
+      }).catch(() => {});
+    }
+
     if (previousStatus !== "Completed" && task.status === "Completed") {
       // Fire-and-forget push notification when task is marked as completed
+      // eslint-disable-next-line no-console
+      console.log("[push] updateTask: sending completed push", {
+        userId,
+        taskId: task._id.toString(),
+        title: task.title,
+        previousStatus,
+        newStatus: task.status,
+        dueDate: task.dueDate,
+      });
       sendPushToUser(userId, {
         title: "Task completed",
         body: task.title,
         data: {
           action: "task_completed",
           taskId: task._id.toString(),
+          status: task.status,
+          dueDate: task.dueDate,
         },
       }).catch(() => {});
     }
@@ -140,6 +186,26 @@ exports.deleteTask = async (req, res) => {
     }
 
     emitToUser(req, "task_deleted", { id: task._id.toString() });
+
+    // Fire-and-forget push notification when a task is deleted.
+    // eslint-disable-next-line no-console
+    console.log("[push] deleteTask: sending deleted push", {
+      userId,
+      taskId: task._id.toString(),
+      title: task.title,
+      status: task.status,
+      dueDate: task.dueDate,
+    });
+    sendPushToUser(userId, {
+      title: "Task deleted",
+      body: task.title,
+      data: {
+        action: "task_deleted",
+        taskId: task._id.toString(),
+        status: task.status,
+        dueDate: task.dueDate,
+      },
+    }).catch(() => {});
 
     res.json({ message: "Task deleted" });
   } catch (err) {

@@ -44,14 +44,14 @@ export interface TaskUpdateInput {
   dueDate?: string | null;
 }
 
-const client = axios.create({
+export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-client.interceptors.request.use((config) => {
+apiClient.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const token = window.localStorage.getItem("authToken");
     if (token) {
@@ -89,7 +89,7 @@ export const mapTaskFromApi = (task: ApiTask): Task => ({
 });
 
 export const fetchTasks = async (): Promise<Task[]> => {
-  const response = await client.get<ApiTask[]>("/api/tasks");
+  const response = await apiClient.get<ApiTask[]>("/api/tasks");
   return response.data.map(mapTaskFromApi);
 };
 
@@ -112,7 +112,7 @@ export const createTask = async (input: TaskInput): Promise<Task> => {
     payload.dueDate = input.dueDate;
   }
 
-  const response = await client.post<ApiTask>("/api/tasks", payload);
+  const response = await apiClient.post<ApiTask>("/api/tasks", payload);
   return mapTaskFromApi(response.data);
 };
 
@@ -139,11 +139,11 @@ export const updateTask = async (
     payload.dueDate = input.dueDate;
   }
 
-  const response = await client.put<ApiTask>(`/api/tasks/${id}`, payload);
+  const response = await apiClient.put<ApiTask>(`/api/tasks/${id}`, payload);
   return mapTaskFromApi(response.data);
 };
 
 export const deleteTask = async (id: string): Promise<void> => {
-  await client.delete(`/api/tasks/${id}`);
+  await apiClient.delete(`/api/tasks/${id}`);
 };
 

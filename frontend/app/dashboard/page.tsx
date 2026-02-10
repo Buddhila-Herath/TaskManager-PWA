@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  AlertCircle,
   CheckCircle2,
   CheckSquare2,
   Circle,
@@ -35,6 +36,7 @@ import { TaskCard } from "../../components/tasks/TaskCard";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { logoutUser, type AuthUser } from "../../lib/authApi";
 import { API_BASE_URL } from "../../lib/constants";
+import { subscribeToPush } from "../../lib/pushApi";
 
 const NAV_ITEMS = [
   { id: "my-tasks", label: "All Tasks", icon: LayoutList },
@@ -68,6 +70,19 @@ export default function DashboardPage() {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [taskPendingDelete, setTaskPendingDelete] = useState<Task | null>(null);
+  const [toast, setToast] = useState<{
+    id: number;
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  const showToast = useCallback((type: "success" | "error", message: string) => {
+    const id = Date.now();
+    setToast({ id, type, message });
+    setTimeout(() => {
+      setToast((current) => (current && current.id === id ? null : current));
+    }, 3000);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -102,6 +117,9 @@ export default function DashboardPage() {
     };
 
     void load();
+    void subscribeToPush().catch(() => {
+      // Best-effort: push is an enhancement and should not block the dashboard.
+    });
   }, [router]);
 
   useEffect(() => {
@@ -237,11 +255,13 @@ export default function DashboardPage() {
           }
           return [created, ...prev];
         });
+        showToast("success", "Task created successfully.");
       } else if (selectedTask) {
         const updated = await updateTask(selectedTask.id, input);
         setTasks((prev) =>
           prev.map((task) => (task.id === updated.id ? updated : task)),
         );
+        showToast("success", "Task updated successfully.");
       }
       setIsModalOpen(false);
     } catch {
@@ -251,6 +271,10 @@ export default function DashboardPage() {
           prev.title ??
           "Something went wrong while saving the task. Please try again.",
       }));
+      showToast(
+        "error",
+        "Something went wrong while saving the task. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -263,8 +287,9 @@ export default function DashboardPage() {
       if (selectedTask?.id === task.id) {
         setIsModalOpen(false);
       }
+      showToast("success", "Task deleted successfully.");
     } catch {
-      // Soft-fail: could surface toast/error UI in future
+      showToast("error", "Unable to delete the task. Please try again.");
     }
   };
 
@@ -277,11 +302,18 @@ export default function DashboardPage() {
         setTasks((prev) =>
           prev.map((item) => (item.id === updated.id ? updated : item)),
         );
+        const label =
+          status === "completed"
+            ? "marked as completed"
+            : status === "in-progress"
+              ? "moved to In Progress"
+              : "set to Pending";
+        showToast("success", `Task "${task.title}" ${label}.`);
       } catch {
-        // Soft-fail: avoid breaking UX on single failure
+        showToast("error", "Unable to update task status. Please try again.");
       }
     },
-    [],
+    [showToast],
   );
 
   const openDeleteConfirm = useCallback((task: Task) => {
@@ -358,6 +390,38 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
+      {toast && (
+        <div className="pointer-events-none fixed right-4 top-4 z-50 flex max-w-xs flex-col gap-2">
+          <div
+            className={`pointer-events-auto flex items-start gap-3 rounded-2xl border px-4 py-3 text-xs shadow-lg ${
+              toast.type === "success"
+                ? "border-emerald-100 bg-emerald-50/95 text-emerald-800"
+                : "border-red-100 bg-red-50/95 text-red-700"
+            }`}
+          >
+            <div className="mt-0.5">
+              {toast.type === "success" ? (
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              ) : (
+                <AlertCircle className="h-4 w-4 text-red-500" />
+              )}
+            </div>
+            <div className="flex-1">
+              <p className="text-[11px] font-semibold">
+                {toast.type === "success" ? "Success" : "Something went wrong"}
+              </p>
+              <p className="mt-0.5 text-[11px] leading-snug">{toast.message}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              className="ml-1 rounded-full px-1.5 py-0.5 text-[11px] font-medium text-slate-400 transition hover:bg-white/60 hover:text-slate-600"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
       {/* Sidebar */}
       <aside
         className={`hidden border-r border-slate-200 bg-white/80 backdrop-blur-sm transition-all duration-300 ease-in-out md:flex md:flex-col ${isSidebarCollapsed ? "w-20" : "w-64"
