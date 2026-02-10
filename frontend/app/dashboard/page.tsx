@@ -116,7 +116,6 @@ export default function DashboardPage() {
           try {
             window.localStorage.setItem("taskflow.tasks", JSON.stringify(data));
           } catch {
-            // Best-effort: offline cache should never break the main flow.
           }
         }
       } catch (error) {
@@ -144,7 +143,6 @@ export default function DashboardPage() {
     void load();
     void registerServiceWorker();
     void subscribeToPush().catch(() => {
-      // Best-effort: push is an enhancement and should not block the dashboard.
     });
   }, [router]);
 
@@ -419,11 +417,10 @@ export default function DashboardPage() {
       {toast && (
         <div className="pointer-events-none fixed right-4 top-4 z-50 flex max-w-xs flex-col gap-2">
           <div
-            className={`pointer-events-auto flex items-start gap-3 rounded-2xl border px-4 py-3 text-xs shadow-lg ${
-              toast.type === "success"
-                ? "border-emerald-100 bg-emerald-50/95 text-emerald-800"
-                : "border-red-100 bg-red-50/95 text-red-700"
-            }`}
+            className={`pointer-events-auto flex items-start gap-3 rounded-2xl border px-4 py-3 text-xs shadow-lg ${toast.type === "success"
+              ? "border-emerald-100 bg-emerald-50/95 text-emerald-800"
+              : "border-red-100 bg-red-50/95 text-red-700"
+              }`}
           >
             <div className="mt-0.5">
               {toast.type === "success" ? (
@@ -484,16 +481,14 @@ export default function DashboardPage() {
                       setActiveNavId(item.id);
                       setIsMobileNavOpen(false);
                     }}
-                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 transition-colors ${
-                      isActive
-                        ? "bg-indigo-50 text-indigo-700"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                    }`}
+                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 transition-colors ${isActive
+                      ? "bg-indigo-50 text-indigo-700"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                      }`}
                   >
                     <Icon
-                      className={`h-4 w-4 ${
-                        isActive ? "text-indigo-600" : "text-slate-400"
-                      }`}
+                      className={`h-4 w-4 ${isActive ? "text-indigo-600" : "text-slate-400"
+                        }`}
                     />
                     <span>{item.label}</span>
                   </button>
@@ -640,7 +635,6 @@ export default function DashboardPage() {
               className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-xs font-semibold text-white"
             >
               {authUser?.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={authUser.avatarUrl}
                   alt="Profile"

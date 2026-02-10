@@ -98,3 +98,65 @@ Fix any reported issues (e.g. missing manifest fields or icon sizes).
 - **Service worker not registering**: Confirm `next-pwa` is not disabled; in production it should register automatically. Check **Application → Service Workers** for errors.
 
 Once the checklist passes and Lighthouse PWA audit is green, the app is installable as a PWA.
+
+---
+
+## 8. Offline support – Viewing previously loaded tasks
+
+The app supports **viewing previously loaded tasks when offline**. Here’s how it works and how to re-verify it.
+
+### How it works
+
+- **Dashboard** (`app/dashboard/page.tsx`):
+  - When tasks are loaded successfully (online), a copy is stored in **localStorage** under the key `taskflow.tasks`.
+  - When the task fetch **fails** (e.g. you’re offline or the server is down), the dashboard reads `taskflow.tasks` from localStorage and shows that list instead, with a message: *"You appear to be offline or the server is unavailable. Showing your last available tasks."*
+- **Service worker** (`public/sw.js`):
+  - Caches the app shell (`/`, `/dashboard`, `/manifest.json`) and static assets so the dashboard page itself loads offline.
+  - Task **data** is not cached by the service worker; it comes from the localStorage copy saved on the last successful load.
+
+So: **offline = last successfully loaded task list is shown from localStorage.**
+
+### How to re-verify and test (production build)
+
+Use a **production** build so the service worker is active:
+
+1. **Build and start**
+   ```bash
+   cd frontend
+   npm run build
+   npm run start
+   ```
+
+2. **Load tasks once (online)**  
+   - Open **http://localhost:3000**, log in, and go to the **Dashboard**.  
+   - Wait until your task list has loaded.  
+   - (Optional) In DevTools → **Application** → **Local Storage** → your origin, confirm the key **`taskflow.tasks`** exists and contains JSON.
+
+3. **Go offline**  
+   - In Chrome DevTools → **Network** tab, set throttling to **Offline** (or check “Offline”).  
+   - Or turn off Wi‑Fi / unplug network on the machine or device.
+
+4. **Reload the dashboard or reopen the app**  
+   - Refresh the page or navigate away and back to `/dashboard`, or close and reopen the PWA window.
+
+5. **Expected result**  
+   - The dashboard page loads (from service worker cache).  
+   - The **last loaded task list** is shown (from localStorage).  
+   - A message appears: *"You appear to be offline or the server is unavailable. Showing your last available tasks."*
+
+6. **Optional – clear cache and confirm**  
+   - DevTools → **Application** → **Local Storage** → remove **`taskflow.tasks`**.  
+   - Reload while still offline: you should see an error like *"Unable to load tasks. Please try again."* (no cached list).  
+   - Go back online, load the dashboard again, then repeat steps 3–5 to confirm offline viewing again.
+
+### Quick checklist – Offline tasks
+
+| Step | What to check |
+|------|----------------|
+| 1 | Production build: `npm run build` then `npm run start`. |
+| 2 | Open dashboard **online** and confirm tasks load; `taskflow.tasks` in Local Storage is set. |
+| 3 | DevTools → Network → **Offline**. |
+| 4 | Reload or re-open dashboard. |
+| 5 | Same task list appears + message “Showing your last available tasks.” |
+
+If all steps match, **offline viewing of previously loaded tasks** is working as intended.

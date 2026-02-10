@@ -27,20 +27,15 @@ const urlBase64ToUint8Array = (base64String: string): Uint8Array => {
 export const subscribeToPush = async (): Promise<void> => {
   if (!isPushSupported()) {
     // eslint-disable-next-line no-console
-    console.log("[push] Not supported in this browser");
     return;
   }
 
   if (!PUBLIC_VAPID_KEY) {
-    // Push is not configured; safely no-op on the client.
-    // eslint-disable-next-line no-console
-    console.log("[push] Missing NEXT_PUBLIC_VAPID_PUBLIC_KEY – skipping subscription");
     return;
   }
 
   const permission = await Notification.requestPermission();
   if (permission !== "granted") {
-    // eslint-disable-next-line no-console
     console.log("[push] Notification permission not granted:", permission);
     return;
   }
@@ -57,7 +52,7 @@ export const subscribeToPush = async (): Promise<void> => {
     const applicationServerKey = urlBase64ToUint8Array(PUBLIC_VAPID_KEY);
     subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey,
+      applicationServerKey: applicationServerKey as BufferSource,
     });
   } else {
     // eslint-disable-next-line no-console
