@@ -273,7 +273,6 @@ export default function DashboardPage() {
       try {
         const updated = await updateTask(task.id, {
           status,
-          title: ""
         });
         setTasks((prev) =>
           prev.map((item) => (item.id === updated.id ? updated : item)),

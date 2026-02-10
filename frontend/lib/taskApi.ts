@@ -36,6 +36,14 @@ export interface TaskInput {
   dueDate?: string | null;
 }
 
+export interface TaskUpdateInput {
+  title?: string;
+  description?: string;
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  dueDate?: string | null;
+}
+
 const client = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -110,7 +118,7 @@ export const createTask = async (input: TaskInput): Promise<Task> => {
 
 export const updateTask = async (
   id: string,
-  input: TaskInput
+  input: TaskUpdateInput
 ): Promise<Task> => {
   const payload: Record<string, unknown> = {};
 
