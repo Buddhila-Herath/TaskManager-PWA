@@ -264,7 +264,7 @@ export default function AuthPage() {
 
             <div>
               <label className={labelClass} htmlFor="email">
-                Email Addressdd<span className="text-red-500"> *</span>
+                Email Address<span className="text-red-500"> *</span>
               </label>
               <input
                 id="email"
@@ -398,7 +398,7 @@ export default function AuthPage() {
           <form className="space-y-4" onSubmit={handleLoginSubmit}>
             <div>
               <label className={labelClass} htmlFor="loginEmail">
-                Email Addressdd<span className="text-red-500"> *</span>
+                Email Address<span className="text-red-500"> *</span>
               </label>
               <input
                 id="loginEmail"
