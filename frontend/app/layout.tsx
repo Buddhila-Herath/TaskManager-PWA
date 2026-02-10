@@ -13,11 +13,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TaskFlow – PWA Task Manager",
-  description:
-    "TaskFlow is a PWA task manager with offline support, realtime updates, and push notifications.",
+  title: "Task Manager PWA",
+  description: "Real-Time Task Management Progressive Web Application",
   manifest: "/manifest.json",
   themeColor: "#000000",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "TaskManager",
+  },
 };
 
 export default function RootLayout({
