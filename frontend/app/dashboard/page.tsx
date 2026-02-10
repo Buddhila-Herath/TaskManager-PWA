@@ -35,7 +35,7 @@ import {
 import { TaskCard } from "../../components/tasks/TaskCard";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { logoutUser, type AuthUser } from "../../lib/authApi";
-import { API_BASE_URL } from "../../lib/constants";
+import { ADMIN_DASHBOARD_ROUTE, API_BASE_URL } from "../../lib/constants";
 import { subscribeToPush } from "../../lib/pushApi";
 
 const NAV_ITEMS = [
@@ -93,7 +93,12 @@ export default function DashboardPage() {
     const storedUser = window.localStorage.getItem("authUser");
     if (storedUser) {
       try {
-        setAuthUser(JSON.parse(storedUser) as AuthUser);
+        const parsedUser = JSON.parse(storedUser) as AuthUser;
+        setAuthUser(parsedUser);
+        if (parsedUser.role === "admin") {
+          router.replace(ADMIN_DASHBOARD_ROUTE);
+          return;
+        }
       } catch {
         // ignore parse errors
       }
