@@ -1,7 +1,7 @@
 const Task = require("../models/Task");
 const { sendPushToUser } = require("../utils/pushService");
 
-const VALID_STATUSES = ["Pending", "Completed"];
+const VALID_STATUSES = ["Pending", "In Progress", "Completed"];
 const VALID_PRIORITIES = ["Low", "Medium", "High", "Urgent"];
 
 const emitToUser = (req, eventName, payload) => {
@@ -16,7 +16,7 @@ const emitToUser = (req, eventName, payload) => {
 };
 
 const normaliseStatus = (status) =>
-  status === "Completed" ? "Completed" : "Pending";
+  VALID_STATUSES.includes(status) ? status : "Pending";
 
 const isValidPriority = (priority) => VALID_PRIORITIES.includes(priority);
 

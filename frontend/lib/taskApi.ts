@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { API_BASE_URL } from "./constants";
 
-export type TaskStatus = "pending" | "completed";
+export type TaskStatus = "pending" | "in-progress" | "completed";
 export type TaskPriority = "Low" | "Medium" | "High" | "Urgent";
 
 export interface Task {
@@ -15,7 +15,7 @@ export interface Task {
   updatedAt: string;
 }
 
-type ApiTaskStatus = "Pending" | "Completed";
+type ApiTaskStatus = "Pending" | "In Progress" | "Completed";
 
 interface ApiTask {
   _id: string;
@@ -56,12 +56,17 @@ client.interceptors.request.use((config: AxiosRequestConfig) => {
   return config;
 });
 
-const mapStatusFromApi = (status: ApiTaskStatus): TaskStatus =>
-  status === "Completed" ? "completed" : "pending";
+const mapStatusFromApi = (status: ApiTaskStatus): TaskStatus => {
+  if (status === "Completed") return "completed";
+  if (status === "In Progress") return "in-progress";
+  return "pending";
+};
 
 const mapStatusToApi = (status?: TaskStatus): ApiTaskStatus | undefined => {
   if (!status) return undefined;
-  return status === "completed" ? "Completed" : "Pending";
+  if (status === "completed") return "Completed";
+  if (status === "in-progress") return "In Progress";
+  return "Pending";
 };
 
 const mapTaskFromApi = (task: ApiTask): Task => ({
