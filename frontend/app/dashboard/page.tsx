@@ -29,6 +29,7 @@ import {
   type ModalMode,
 } from "../../components/tasks/TaskModal";
 import { TaskCard } from "../../components/tasks/TaskCard";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { logoutUser, type AuthUser } from "../../lib/authApi";
 
 const NAV_ITEMS = [
@@ -60,6 +61,8 @@ export default function DashboardPage() {
   const [formErrors, setFormErrors] = useState<TaskFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [taskPendingDelete, setTaskPendingDelete] = useState<Task | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -182,11 +185,6 @@ export default function DashboardPage() {
   };
 
   const handleDeleteTask = async (task: Task) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this task?",
-    );
-    if (!confirmDelete) return;
-
     try {
       await deleteTask(task.id);
       setTasks((prev) => prev.filter((item) => item.id !== task.id));
@@ -213,6 +211,11 @@ export default function DashboardPage() {
     },
     [],
   );
+
+  const openDeleteConfirm = useCallback((task: Task) => {
+    setTaskPendingDelete(task);
+    setIsDeleteConfirmOpen(true);
+  }, []);
 
   const handleLogout = useCallback(() => {
     logoutUser();
@@ -536,9 +539,28 @@ export default function DashboardPage() {
         onSubmit={handleSubmit}
         onDelete={
           modalMode === "edit" && selectedTask
-            ? () => void handleDeleteTask(selectedTask)
+            ? () => openDeleteConfirm(selectedTask)
             : undefined
         }
+      />
+
+      <ConfirmDialog
+        open={isDeleteConfirmOpen}
+        title="Delete task?"
+        description={`Are you sure you want to delete "${
+          taskPendingDelete?.title ?? "this task"
+        }"? This action cannot be undone.`}
+        confirmLabel="Delete task"
+        cancelLabel="Cancel"
+        onCancel={() => {
+          setIsDeleteConfirmOpen(false);
+        }}
+        onConfirm={() => {
+          if (taskPendingDelete) {
+            void handleDeleteTask(taskPendingDelete);
+          }
+          setIsDeleteConfirmOpen(false);
+        }}
       />
     </div>
   );
