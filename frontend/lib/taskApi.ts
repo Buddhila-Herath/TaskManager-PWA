@@ -15,9 +15,9 @@ export interface Task {
   updatedAt: string;
 }
 
-type ApiTaskStatus = "Pending" | "In Progress" | "Completed";
+export type ApiTaskStatus = "Pending" | "In Progress" | "Completed";
 
-interface ApiTask {
+export interface ApiTask {
   _id: string;
   title: string;
   description?: string;
@@ -69,7 +69,7 @@ const mapStatusToApi = (status?: TaskStatus): ApiTaskStatus | undefined => {
   return "Pending";
 };
 
-const mapTaskFromApi = (task: ApiTask): Task => ({
+export const mapTaskFromApi = (task: ApiTask): Task => ({
   id: task._id,
   title: task.title,
   description: task.description ?? "",
