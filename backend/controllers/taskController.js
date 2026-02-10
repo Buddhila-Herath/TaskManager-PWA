@@ -1,4 +1,5 @@
 const Task = require("../models/Task");
+const { sendPushToUser } = require("../utils/pushService");
 
 const emitToUser = (req, eventName, payload) => {
   const io = req.app.get("io");
@@ -30,6 +31,16 @@ exports.createTask = async (req, res) => {
 
     emitToUser(req, "task_created", task);
 
+    // Fire-and-forget push notification
+    sendPushToUser(userId, {
+      title: "New task created",
+      body: task.title,
+      data: {
+        action: "task_created",
+        taskId: task._id.toString(),
+      },
+    }).catch(() => {});
+
     res.status(201).json(task);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
@@ -56,6 +67,9 @@ exports.updateTask = async (req, res) => {
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
+
+    const previousStatus = task.status;
+
     if (title !== undefined) task.title = title.trim();
     if (description !== undefined) task.description = description.trim();
     if (status !== undefined && ["Pending", "Completed"].includes(status)) {
@@ -64,6 +78,18 @@ exports.updateTask = async (req, res) => {
     await task.save();
 
     emitToUser(req, "task_updated", task);
+
+    if (previousStatus !== "Completed" && task.status === "Completed") {
+      // Fire-and-forget push notification when task is marked as completed
+      sendPushToUser(userId, {
+        title: "Task completed",
+        body: task.title,
+        data: {
+          action: "task_completed",
+          taskId: task._id.toString(),
+        },
+      }).catch(() => {});
+    }
 
     res.json(task);
   } catch (err) {
