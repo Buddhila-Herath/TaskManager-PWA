@@ -37,6 +37,7 @@ import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { logoutUser, type AuthUser } from "../../lib/authApi";
 import { API_BASE_URL } from "../../lib/constants";
 import { subscribeToPush } from "../../lib/pushApi";
+import { registerServiceWorker } from "../../lib/swRegistration";
 
 const NAV_ITEMS = [
   { id: "my-tasks", label: "All Tasks", icon: LayoutList },
@@ -140,6 +141,7 @@ export default function DashboardPage() {
     };
 
     void load();
+    void registerServiceWorker();
     void subscribeToPush().catch(() => {
       // Best-effort: push is an enhancement and should not block the dashboard.
     });
