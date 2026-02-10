@@ -11,12 +11,16 @@ export const registerServiceWorker = async (): Promise<
 
   try {
     const registration = await navigator.serviceWorker.register("/sw.js");
-    // eslint-disable-next-line no-console
-    console.log("[sw] Service worker registered", registration);
+    if (process.env.NODE_ENV !== "production") {
+      // eslint-disable-next-line no-console
+      console.log("[sw] Service worker registered", registration);
+    }
     return registration;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.log("[sw] Failed to register service worker", error);
+    if (process.env.NODE_ENV !== "production") {
+      // eslint-disable-next-line no-console
+      console.log("[sw] Failed to register service worker", error);
+    }
     return null;
   }
 };
