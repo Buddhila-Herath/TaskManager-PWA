@@ -228,7 +228,15 @@ export default function DashboardPage() {
     try {
       if (modalMode === "create") {
         const created = await createTask(input);
-        setTasks((prev) => [created, ...prev]);
+        setTasks((prev) => {
+          const exists = prev.some((task) => task.id === created.id);
+          if (exists) {
+            return prev.map((task) =>
+              task.id === created.id ? created : task,
+            );
+          }
+          return [created, ...prev];
+        });
       } else if (selectedTask) {
         const updated = await updateTask(selectedTask.id, input);
         setTasks((prev) =>
@@ -265,6 +273,7 @@ export default function DashboardPage() {
       try {
         const updated = await updateTask(task.id, {
           status,
+          title: ""
         });
         setTasks((prev) =>
           prev.map((item) => (item.id === updated.id ? updated : item)),
@@ -448,9 +457,8 @@ export default function DashboardPage() {
           <div className="flex items-center gap-5">
             <div className="flex items-center gap-1 text-xs text-emerald-600">
               <span
-                className={`h-2 w-2 rounded-full ${
-                  isRealtimeConnected ? "bg-emerald-500" : "bg-slate-300"
-                }`}
+                className={`h-2 w-2 rounded-full ${isRealtimeConnected ? "bg-emerald-500" : "bg-slate-300"
+                  }`}
               />
               <span className="font-medium">
                 {isRealtimeConnected ? "Synced" : "Connecting"}
@@ -619,9 +627,8 @@ export default function DashboardPage() {
       <ConfirmDialog
         open={isDeleteConfirmOpen}
         title="Delete task?"
-        description={`Are you sure you want to delete "${
-          taskPendingDelete?.title ?? "this task"
-        }"? This action cannot be undone.`}
+        description={`Are you sure you want to delete "${taskPendingDelete?.title ?? "this task"
+          }"? This action cannot be undone.`}
         confirmLabel="Delete task"
         cancelLabel="Cancel"
         onCancel={() => {
