@@ -17,6 +17,7 @@ type AdminView = "users" | "tasks";
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [view, setView] = useState<AdminView>("users");
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [tasks, setTasks] = useState<AdminTaskWithUser[]>([]);
@@ -99,6 +100,86 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
+      {/* Mobile sidebar / nav */}
+      {isMobileNavOpen && (
+        <div className="fixed inset-0 z-30 flex md:hidden">
+          <div className="flex w-64 flex-col border-r border-slate-200 bg-white/95 backdrop-blur-sm">
+            <div className="flex items-center justify-between px-4 py-4">
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md">
+                  <CheckSquare2 className="h-4 w-4" />
+                </div>
+                <div className="leading-tight">
+                  <p className="text-sm font-semibold text-slate-900">TaskFlow</p>
+                  <p className="text-[11px] text-slate-400">Admin</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMobileNavOpen(false)}
+                aria-label="Close navigation"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
+              >
+                ×
+              </button>
+            </div>
+
+            <nav className="mt-2 flex-1 space-y-1 px-2 py-1 text-sm">
+              <button
+                type="button"
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 transition-colors ${
+                  view === "users"
+                    ? "bg-indigo-50 text-indigo-700"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                }`}
+                onClick={() => {
+                  setView("users");
+                  setIsMobileNavOpen(false);
+                }}
+              >
+                <Users
+                  className={`h-4 w-4 ${
+                    view === "users" ? "text-indigo-600" : "text-slate-400"
+                  }`}
+                />
+                <span>All Users</span>
+              </button>
+              <button
+                type="button"
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 transition-colors ${
+                  view === "tasks"
+                    ? "bg-indigo-50 text-indigo-700"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                }`}
+                onClick={() => {
+                  setView("tasks");
+                  setIsMobileNavOpen(false);
+                }}
+              >
+                <LayoutList
+                  className={`h-4 w-4 ${
+                    view === "tasks" ? "text-indigo-600" : "text-slate-400"
+                  }`}
+                />
+                <span>All Tasks</span>
+              </button>
+            </nav>
+
+            <div className="border-t border-slate-200 px-4 py-4 text-xs text-slate-500">
+              <p className="font-medium text-slate-700">Signed in as</p>
+              <p className="truncate text-[11px]">
+                {authUser?.email ?? "Admin user"}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="flex-1 bg-slate-900/40"
+            onClick={() => setIsMobileNavOpen(false)}
+            aria-label="Close navigation overlay"
+          />
+        </div>
+      )}
       {/* Sidebar */}
       <aside className="hidden w-64 border-r border-slate-200 bg-white/80 backdrop-blur-sm md:flex md:flex-col">
         <div className="flex items-center gap-2 px-4 py-4">
@@ -158,6 +239,15 @@ export default function AdminDashboardPage() {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between border-b border-slate-200 bg-white/70 px-4 py-3 backdrop-blur-sm md:px-6">
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsMobileNavOpen(true)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm md:hidden"
+              aria-label="Open navigation"
+            >
+              {/* simple menu icon using three dots to avoid extra imports */}
+              <span className="block h-0.5 w-4 rounded-full bg-slate-500" />
+            </button>
             <div className="flex h-8 w-8 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md md:hidden">
               <CheckSquare2 className="h-4 w-4" />
             </div>
