@@ -4,6 +4,7 @@ const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
 const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 
@@ -17,6 +18,7 @@ const io = new Server(server, {
   },
 });
 
+app.set('io', io);
 app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000' }));
 app.use(express.json());
 
@@ -33,6 +35,23 @@ app.get('/health', (_req, res) => {
 
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
+
+  socket.on('authenticate', (token) => {
+    if (!token) {
+      return;
+    }
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const userRoom = `user:${decoded.id}`;
+      socket.join(userRoom);
+      console.log(`Socket ${socket.id} joined room ${userRoom}`);
+    } catch (err) {
+      console.warn('Socket authentication failed:', err.message);
+      socket.emit('auth_error', { message: 'Authentication failed' });
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
   });

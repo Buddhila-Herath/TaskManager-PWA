@@ -1,5 +1,16 @@
 const Task = require("../models/Task");
 
+const emitToUser = (req, eventName, payload) => {
+  const io = req.app.get("io");
+  const userId = req.user?.id;
+
+  if (!io || !userId) {
+    return;
+  }
+
+  io.to(`user:${userId}`).emit(eventName, payload);
+};
+
 exports.createTask = async (req, res) => {
   const { title, description, status } = req.body;
   const userId = req.user.id;
@@ -16,6 +27,9 @@ exports.createTask = async (req, res) => {
       user: userId,
     });
     await task.save();
+
+    emitToUser(req, "task_created", task);
+
     res.status(201).json(task);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
@@ -48,10 +62,13 @@ exports.updateTask = async (req, res) => {
       task.status = status;
     }
     await task.save();
+
+    emitToUser(req, "task_updated", task);
+
     res.json(task);
   } catch (err) {
-    if (err.kind === 'ObjectId') {
-        return res.status(404).json({ message: "Task not found" });
+    if (err.kind === "ObjectId") {
+      return res.status(404).json({ message: "Task not found" });
     }
     res.status(500).json({ message: "Server error" });
   }
@@ -66,10 +83,13 @@ exports.deleteTask = async (req, res) => {
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
+
+    emitToUser(req, "task_deleted", { id: task._id.toString() });
+
     res.json({ message: "Task deleted" });
   } catch (err) {
-    if (err.kind === 'ObjectId') {
-        return res.status(404).json({ message: "Task not found" });
+    if (err.kind === "ObjectId") {
+      return res.status(404).json({ message: "Task not found" });
     }
     res.status(500).json({ message: "Server error" });
   }
