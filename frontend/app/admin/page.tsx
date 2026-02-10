@@ -177,7 +177,7 @@ export default function AdminDashboardPage() {
             className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700"
           >
             <UserCircle2 className="h-4 w-4" />
-            <span>User dashboard</span>
+            <span>My dashboard</span>
           </button>
         </header>
 
@@ -264,6 +264,16 @@ export default function AdminDashboardPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedUserId(null);
+                        setView("users");
+                      }}
+                      className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700"
+                    >
+                      <span>← Back</span>
+                    </button>
                     <select
                       value={selectedUserId ?? ""}
                       onChange={(event) =>

@@ -71,11 +71,12 @@ exports.createTask = async (req, res) => {
 
 exports.getTasks = async (req, res) => {
   const userId = req.user.id;
-  const isAdmin = req.user.role === "admin";
 
   try {
-    const query = isAdmin ? {} : { user: userId };
-    const tasks = await Task.find(query).sort({ updatedAt: -1 });
+    // For the standard tasks API, always return only the
+    // current user's tasks, even if the user is an admin.
+    // Admins can still see all tasks via the dedicated admin endpoints.
+    const tasks = await Task.find({ user: userId }).sort({ updatedAt: -1 });
     res.json(tasks);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
