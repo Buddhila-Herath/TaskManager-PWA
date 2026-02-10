@@ -47,6 +47,7 @@ const NAV_ITEMS = [
 export default function DashboardPage() {
   const router = useRouter();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [activeNavId, setActiveNavId] = useState<(typeof NAV_ITEMS)[number]["id"]>(
     "my-tasks",
   );
@@ -423,6 +424,83 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+      {/* Mobile sidebar / nav */}
+      {isMobileNavOpen && (
+        <div className="fixed inset-0 z-30 flex md:hidden">
+          <div className="flex w-64 min-w-0 shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white/95 backdrop-blur-sm">
+            <div className="flex items-center justify-between px-4 py-4">
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md">
+                  <CheckSquare2 className="h-4 w-4" />
+                </div>
+                <div className="leading-tight">
+                  <p className="text-sm font-semibold text-slate-900">TaskFlow</p>
+                  <p className="text-[11px] text-slate-400">PWA</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMobileNavOpen(false)}
+                aria-label="Close navigation"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
+              >
+                ×
+              </button>
+            </div>
+
+            <nav className="mt-2 flex-1 space-y-1 px-2 py-1 text-sm">
+              {NAV_ITEMS.map((item) => {
+                const Icon = item.icon;
+                const isActive = item.id === activeNavId;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveNavId(item.id);
+                      setIsMobileNavOpen(false);
+                    }}
+                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 transition-colors ${
+                      isActive
+                        ? "bg-indigo-50 text-indigo-700"
+                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                    }`}
+                  >
+                    <Icon
+                      className={`h-4 w-4 ${
+                        isActive ? "text-indigo-600" : "text-slate-400"
+                      }`}
+                    />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+
+            <div className="border-t border-slate-200 px-4 py-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileNavOpen(false);
+                  handleLogout();
+                }}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
+              >
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-xs font-semibold text-red-700">
+                  <LogOut className="h-4 w-4" />
+                </div>
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="flex-1 bg-slate-900/40"
+            onClick={() => setIsMobileNavOpen(false)}
+            aria-label="Close navigation overlay"
+          />
+        </div>
+      )}
       {/* Sidebar */}
       <aside
         className={`hidden border-r border-slate-200 bg-white/80 backdrop-blur-sm transition-all duration-300 ease-in-out md:flex md:flex-col ${isSidebarCollapsed ? "w-20" : "w-64"
@@ -494,7 +572,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3 md:hidden">
             <button
               type="button"
-              onClick={() => setIsSidebarCollapsed((prev) => !prev)}
+              onClick={() => setIsMobileNavOpen(true)}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm"
               aria-label="Toggle navigation"
             >
@@ -535,7 +613,7 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={handleProfileClick}
-              className="hidden h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-semibold text-white md:flex overflow-hidden"
+              className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-xs font-semibold text-white"
             >
               {authUser?.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -581,9 +659,11 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Search and controls */}
-            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex-1">
+            {/* Search and controls — hidden on mobile when sidebar is open */}
+            <div
+              className={`flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between ${isMobileNavOpen ? "hidden md:flex" : ""}`}
+            >
+              <div className="min-w-0 flex-1">
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
@@ -591,7 +671,7 @@ export default function DashboardPage() {
                     placeholder="Search tasks by title or description..."
                     value={searchTerm}
                     onChange={(event) => setSearchTerm(event.target.value)}
-                    className="w-full rounded-full border border-slate-200 bg-white px-9 py-2 text-xs text-slate-800 shadow-sm outline-none ring-0 transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                    className="w-full min-w-0 rounded-full border border-slate-200 bg-white px-9 py-2 text-xs text-slate-800 shadow-sm outline-none ring-0 transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
                   />
                 </div>
               </div>
