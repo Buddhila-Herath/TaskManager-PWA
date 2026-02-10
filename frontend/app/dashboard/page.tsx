@@ -13,7 +13,9 @@ import {
   SortAsc,
   Clock3,
 } from "lucide-react";
+import { io, type Socket } from "socket.io-client";
 import {
+  type ApiTask,
   Task,
   TaskStatus,
   TaskInput,
@@ -21,6 +23,7 @@ import {
   createTask,
   updateTask,
   deleteTask,
+  mapTaskFromApi,
 } from "../../lib/taskApi";
 import {
   TaskModal,
@@ -31,6 +34,7 @@ import {
 import { TaskCard } from "../../components/tasks/TaskCard";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { logoutUser, type AuthUser } from "../../lib/authApi";
+import { API_BASE_URL } from "../../lib/constants";
 
 const NAV_ITEMS = [
   { id: "my-tasks", label: "All Tasks", icon: LayoutList },
@@ -48,6 +52,7 @@ export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<ModalMode>("create");
@@ -98,6 +103,65 @@ export default function DashboardPage() {
 
     void load();
   }, [router]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const token = window.localStorage.getItem("authToken");
+    if (!token) {
+      return;
+    }
+
+    const socketUrl = (process.env.NEXT_PUBLIC_WS_URL ?? API_BASE_URL).replace(
+      /\/+$/,
+      "",
+    );
+
+    const socket: Socket = io(socketUrl, {
+      transports: ["websocket"],
+    });
+
+    socket.on("connect", () => {
+      setIsRealtimeConnected(true);
+      socket.emit("authenticate", token);
+    });
+
+    socket.on("disconnect", () => {
+      setIsRealtimeConnected(false);
+    });
+
+    socket.on("task_created", (payload: ApiTask) => {
+      const created = mapTaskFromApi(payload);
+      setTasks((prev) => {
+        if (prev.some((task) => task.id === created.id)) {
+          return prev;
+        }
+        return [created, ...prev];
+      });
+    });
+
+    socket.on("task_updated", (payload: ApiTask) => {
+      const updated = mapTaskFromApi(payload);
+      setTasks((prev) =>
+        prev.map((task) => (task.id === updated.id ? updated : task)),
+      );
+    });
+
+    socket.on("task_deleted", (payload: { id: string }) => {
+      setTasks((prev) => prev.filter((task) => task.id !== payload.id));
+    });
+
+    socket.on("auth_error", () => {
+      // If auth fails, we simply stop listening on this socket instance.
+      socket.disconnect();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   const openCreateModal = useCallback(() => {
     setModalMode("create");
@@ -164,7 +228,15 @@ export default function DashboardPage() {
     try {
       if (modalMode === "create") {
         const created = await createTask(input);
-        setTasks((prev) => [created, ...prev]);
+        setTasks((prev) => {
+          const exists = prev.some((task) => task.id === created.id);
+          if (exists) {
+            return prev.map((task) =>
+              task.id === created.id ? created : task,
+            );
+          }
+          return [created, ...prev];
+        });
       } else if (selectedTask) {
         const updated = await updateTask(selectedTask.id, input);
         setTasks((prev) =>
@@ -383,9 +455,16 @@ export default function DashboardPage() {
 
           <div className="flex items-center gap-5">
             <div className="flex items-center gap-1 text-xs text-emerald-600">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              <span className="font-medium">Synced</span>
-              <span className="text-slate-400">• Online</span>
+              <span
+                className={`h-2 w-2 rounded-full ${isRealtimeConnected ? "bg-emerald-500" : "bg-slate-300"
+                  }`}
+              />
+              <span className="font-medium">
+                {isRealtimeConnected ? "Synced" : "Connecting"}
+              </span>
+              <span className="text-slate-400">
+                {isRealtimeConnected ? "• Online" : "• Realtime"}
+              </span>
             </div>
             <div className="hidden h-8 w-px bg-slate-200 md:block" />
             <button
@@ -547,9 +626,8 @@ export default function DashboardPage() {
       <ConfirmDialog
         open={isDeleteConfirmOpen}
         title="Delete task?"
-        description={`Are you sure you want to delete "${
-          taskPendingDelete?.title ?? "this task"
-        }"? This action cannot be undone.`}
+        description={`Are you sure you want to delete "${taskPendingDelete?.title ?? "this task"
+          }"? This action cannot be undone.`}
         confirmLabel="Delete task"
         cancelLabel="Cancel"
         onCancel={() => {

@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig } from "axios";
+import axios, { AxiosRequestHeaders } from "axios";
 import { API_BASE_URL } from "./constants";
 
 export type TaskStatus = "pending" | "in-progress" | "completed";
@@ -15,9 +15,9 @@ export interface Task {
   updatedAt: string;
 }
 
-type ApiTaskStatus = "Pending" | "In Progress" | "Completed";
+export type ApiTaskStatus = "Pending" | "In Progress" | "Completed";
 
-interface ApiTask {
+export interface ApiTask {
   _id: string;
   title: string;
   description?: string;
@@ -36,6 +36,14 @@ export interface TaskInput {
   dueDate?: string | null;
 }
 
+export interface TaskUpdateInput {
+  title?: string;
+  description?: string;
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  dueDate?: string | null;
+}
+
 const client = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -43,14 +51,14 @@ const client = axios.create({
   },
 });
 
-client.interceptors.request.use((config: AxiosRequestConfig) => {
+client.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const token = window.localStorage.getItem("authToken");
     if (token) {
-      config.headers = {
-        ...config.headers,
-        Authorization: `Bearer ${token}`,
-      };
+      if (!config.headers) {
+        config.headers = {} as AxiosRequestHeaders;
+      }
+      (config.headers as AxiosRequestHeaders).Authorization = `Bearer ${token}`;
     }
   }
   return config;
@@ -69,7 +77,7 @@ const mapStatusToApi = (status?: TaskStatus): ApiTaskStatus | undefined => {
   return "Pending";
 };
 
-const mapTaskFromApi = (task: ApiTask): Task => ({
+export const mapTaskFromApi = (task: ApiTask): Task => ({
   id: task._id,
   title: task.title,
   description: task.description ?? "",
@@ -110,7 +118,7 @@ export const createTask = async (input: TaskInput): Promise<Task> => {
 
 export const updateTask = async (
   id: string,
-  input: TaskInput
+  input: TaskUpdateInput
 ): Promise<Task> => {
   const payload: Record<string, unknown> = {};
 
