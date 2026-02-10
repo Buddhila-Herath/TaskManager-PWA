@@ -223,11 +223,10 @@ export default function AuthPage() {
 
         {globalMessage && (
           <div
-            className={`mb-4 rounded-lg px-3 py-2 text-xs ${
-              globalMessageType === "success"
+            className={`mb-4 rounded-lg px-3 py-2 text-xs ${globalMessageType === "success"
                 ? "bg-emerald-50 text-emerald-700"
                 : "bg-red-50 text-red-700"
-            }`}
+              }`}
           >
             {globalMessage}
           </div>
@@ -366,7 +365,7 @@ export default function AuthPage() {
                 htmlFor="acceptTerms"
                 className="text-xs text-gray-500 leading-snug"
               >
-                I agree to the{" "}
+                I agree to{" "}
                 <span className="font-medium text-indigo-600">
                   Terms of Service
                 </span>{" "}
