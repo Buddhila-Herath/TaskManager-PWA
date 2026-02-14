@@ -13,6 +13,8 @@ import {
   Search,
   SortAsc,
   Clock3,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { io, type Socket } from "socket.io-client";
 import {
@@ -37,7 +39,7 @@ import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { logoutUser, type AuthUser } from "../../lib/authApi";
 import { API_BASE_URL } from "../../lib/constants";
 import { subscribeToPush } from "../../lib/pushApi";
-import { registerServiceWorker } from "../../lib/swRegistration";
+import { useTheme } from "../../contexts/ThemeProvider";
 
 const NAV_ITEMS = [
   { id: "my-tasks", label: "All Tasks", icon: LayoutList },
@@ -47,8 +49,8 @@ const NAV_ITEMS = [
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [activeNavId, setActiveNavId] = useState<(typeof NAV_ITEMS)[number]["id"]>(
     "my-tasks",
   );
@@ -112,28 +114,7 @@ export default function DashboardPage() {
       try {
         const data = await fetchTasks();
         setTasks(data);
-        if (typeof window !== "undefined") {
-          try {
-            window.localStorage.setItem("taskflow.tasks", JSON.stringify(data));
-          } catch {
-          }
-        }
       } catch (error) {
-        if (typeof window !== "undefined") {
-          const cachedTasks = window.localStorage.getItem("taskflow.tasks");
-          if (cachedTasks) {
-            try {
-              const parsedTasks = JSON.parse(cachedTasks) as Task[];
-              setTasks(parsedTasks);
-              setLoadError(
-                "You appear to be offline or the server is unavailable. Showing your last available tasks.",
-              );
-              return;
-            } catch {
-              // Ignore parse errors and fall back to generic error handling.
-            }
-          }
-        }
         setLoadError("Unable to load tasks. Please try again.");
       } finally {
         setIsLoading(false);
@@ -141,8 +122,8 @@ export default function DashboardPage() {
     };
 
     void load();
-    void registerServiceWorker();
     void subscribeToPush().catch(() => {
+      // Best-effort: push is an enhancement and should not block the dashboard.
     });
   }, [router]);
 
@@ -413,7 +394,7 @@ export default function DashboardPage() {
     }, [activeNavId, searchTerm, tasks]);
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       {toast && (
         <div className="pointer-events-none fixed right-4 top-4 z-50 flex max-w-xs flex-col gap-2">
           <div
@@ -445,84 +426,9 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-      {/* Mobile sidebar / nav */}
-      {isMobileNavOpen && (
-        <div className="fixed inset-0 z-30 flex md:hidden">
-          <div className="flex w-64 min-w-0 shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white/95 backdrop-blur-sm">
-            <div className="flex items-center justify-between px-4 py-4">
-              <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md">
-                  <CheckSquare2 className="h-4 w-4" />
-                </div>
-                <div className="leading-tight">
-                  <p className="text-sm font-semibold text-slate-900">TaskFlow</p>
-                  <p className="text-[11px] text-slate-400">PWA</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsMobileNavOpen(false)}
-                aria-label="Close navigation"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
-              >
-                ×
-              </button>
-            </div>
-
-            <nav className="mt-2 flex-1 space-y-1 px-2 py-1 text-sm">
-              {NAV_ITEMS.map((item) => {
-                const Icon = item.icon;
-                const isActive = item.id === activeNavId;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveNavId(item.id);
-                      setIsMobileNavOpen(false);
-                    }}
-                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 transition-colors ${isActive
-                      ? "bg-indigo-50 text-indigo-700"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                      }`}
-                  >
-                    <Icon
-                      className={`h-4 w-4 ${isActive ? "text-indigo-600" : "text-slate-400"
-                        }`}
-                    />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-
-            <div className="border-t border-slate-200 px-4 py-4">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsMobileNavOpen(false);
-                  handleLogout();
-                }}
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
-              >
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-xs font-semibold text-red-700">
-                  <LogOut className="h-4 w-4" />
-                </div>
-                <span>Logout</span>
-              </button>
-            </div>
-          </div>
-          <button
-            type="button"
-            className="flex-1 bg-slate-900/40"
-            onClick={() => setIsMobileNavOpen(false)}
-            aria-label="Close navigation overlay"
-          />
-        </div>
-      )}
       {/* Sidebar */}
       <aside
-        className={`hidden border-r border-slate-200 bg-white/80 backdrop-blur-sm transition-all duration-300 ease-in-out md:flex md:flex-col ${isSidebarCollapsed ? "w-20" : "w-64"
+        className={`hidden border-r border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm transition-all duration-300 ease-in-out md:flex md:flex-col ${isSidebarCollapsed ? "w-20" : "w-64"
           }`}
       >
         <div className="flex items-center justify-between px-4 py-4">
@@ -532,8 +438,8 @@ export default function DashboardPage() {
             </div>
             {!isSidebarCollapsed && (
               <div className="leading-tight">
-                <p className="text-sm font-semibold text-slate-900">TaskFlow</p>
-                <p className="text-[11px] text-slate-400">PWA</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">TaskFlow</p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">PWA</p>
               </div>
             )}
           </div>
@@ -541,7 +447,7 @@ export default function DashboardPage() {
             type="button"
             onClick={() => setIsSidebarCollapsed((prev) => !prev)}
             aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:text-indigo-600"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 transition hover:border-indigo-200 dark:hover:border-indigo-700 hover:text-indigo-600 dark:hover:text-indigo-400"
           >
             <Menu className="h-4 w-4" />
           </button>
@@ -562,7 +468,7 @@ export default function DashboardPage() {
                   }`}
               >
                 <Icon
-                  className={`h-4 w-4 ${isActive ? "text-indigo-600" : "text-slate-400"}`}
+                  className={`h-4 w-4 ${isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 dark:text-slate-500"}`}
                 />
                 {!isSidebarCollapsed && <span>{item.label}</span>}
               </button>
@@ -570,13 +476,13 @@ export default function DashboardPage() {
           })}
         </nav>
 
-        <div className="border-t border-slate-200 px-4 py-4">
+        <div className="border-t border-slate-200 dark:border-slate-800 px-4 py-4">
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-950"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-xs font-semibold text-red-700">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-950 text-xs font-semibold text-red-700 dark:text-red-400">
               <LogOut className="h-4 w-4" />
             </div>
             {!isSidebarCollapsed && <span>Logout</span>}
@@ -587,12 +493,12 @@ export default function DashboardPage() {
       {/* Main content */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-slate-200 bg-white/70 px-4 py-3 backdrop-blur-sm md:px-6">
+        <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/70 px-4 py-3 backdrop-blur-sm md:px-6">
           <div className="flex items-center gap-3 md:hidden">
             <button
               type="button"
-              onClick={() => setIsMobileNavOpen(true)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm"
+              onClick={() => setIsSidebarCollapsed((prev) => !prev)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 shadow-sm"
               aria-label="Toggle navigation"
             >
               <Menu className="h-4 w-4" />
@@ -602,39 +508,52 @@ export default function DashboardPage() {
                 <CheckSquare2 className="h-4 w-4" />
               </div>
               <div className="leading-tight">
-                <p className="text-sm font-semibold text-slate-900">TaskFlow</p>
-                <p className="text-[11px] text-slate-400">PWA</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">TaskFlow</p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">PWA</p>
               </div>
             </div>
           </div>
 
           <div className="hidden items-center gap-2 md:flex">
-            <span className="text-xs font-medium text-slate-500">Workspace</span>
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Workspace</span>
+            <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-300">
               My Tasks
             </span>
           </div>
 
-          <div className="flex items-center gap-5">
-            <div className="flex items-center gap-1 text-xs text-emerald-600">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
               <span
-                className={`h-2 w-2 rounded-full ${isRealtimeConnected ? "bg-emerald-500" : "bg-slate-300"
+                className={`h-2 w-2 rounded-full ${isRealtimeConnected ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"
                   }`}
               />
               <span className="font-medium">
                 {isRealtimeConnected ? "Synced" : "Connecting"}
               </span>
-              <span className="text-slate-400">
+              <span className="text-slate-400 dark:text-slate-500">
                 {isRealtimeConnected ? "• Online" : "• Realtime"}
               </span>
             </div>
-            <div className="hidden h-8 w-px bg-slate-200 md:block" />
+            <div className="hidden h-8 w-px bg-slate-200 dark:bg-slate-700 md:block" />
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition hover:border-indigo-200 dark:hover:border-indigo-700 hover:text-indigo-600 dark:hover:text-indigo-400"
+              aria-label="Toggle dark mode"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </button>
             <button
               type="button"
               onClick={handleProfileClick}
-              className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-xs font-semibold text-white"
+              className="hidden h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-semibold text-white md:flex overflow-hidden"
             >
               {authUser?.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={authUser.avatarUrl}
                   alt="Profile"
@@ -653,43 +572,41 @@ export default function DashboardPage() {
             {/* Page title row */}
             <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
               <div>
-                <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">
+                <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100 sm:text-2xl">
                   My Tasks
                 </h1>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                   {pendingCount} pending, {inProgressCount} in progress,{" "}
                   {completedCount} completed
                 </p>
               </div>
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <div className="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1">
-                  <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                  <span className="font-medium text-emerald-700">
+              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <div className="flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950 px-2 py-1">
+                  <CheckCircle2 className="h-3 w-3 text-emerald-500 dark:text-emerald-400" />
+                  <span className="font-medium text-emerald-700 dark:text-emerald-300">
                     {completedCount} Done
                   </span>
                 </div>
-                <div className="flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-1">
-                  <Circle className="h-3 w-3 text-indigo-500" />
-                  <span className="font-medium text-indigo-700">
+                <div className="flex items-center gap-1 rounded-full bg-indigo-50 dark:bg-indigo-950 px-2 py-1">
+                  <Circle className="h-3 w-3 text-indigo-500 dark:text-indigo-400" />
+                  <span className="font-medium text-indigo-700 dark:text-indigo-300">
                     {activeCount} Active
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Search and controls — hidden on mobile when sidebar is open */}
-            <div
-              className={`flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between ${isMobileNavOpen ? "hidden md:flex" : ""}`}
-            >
-              <div className="min-w-0 flex-1">
+            {/* Search and controls */}
+            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex-1">
                 <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                   <input
                     type="search"
                     placeholder="Search tasks by title or description..."
                     value={searchTerm}
                     onChange={(event) => setSearchTerm(event.target.value)}
-                    className="w-full min-w-0 rounded-full border border-slate-200 bg-white px-9 py-2 text-xs text-slate-800 shadow-sm outline-none ring-0 transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                    className="w-full rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-9 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 shadow-sm outline-none ring-0 transition focus:border-indigo-400 dark:focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950"
                   />
                 </div>
               </div>
@@ -723,7 +640,7 @@ export default function DashboardPage() {
             {/* Tasks list */}
             <section className="space-y-3">
               {!isLoading && !loadError && filteredTasks.length > 0 && (
-                <div className="mt-2 hidden items-center justify-between px-1 text-[11px] font-medium text-slate-400 sm:flex">
+                <div className="mt-2 hidden items-center justify-between px-1 text-[11px] font-medium text-slate-400 dark:text-slate-500 sm:flex">
                   <span className="flex-1 pl-9">Task</span>
                   <div className="flex w-56 justify-end gap-3 pr-1">
                     <span className="w-20 text-right">Status</span>
@@ -734,13 +651,13 @@ export default function DashboardPage() {
               )}
 
               {isLoading && (
-                <div className="mt-6 rounded-2xl border border-slate-100 bg-white/90 px-6 py-8 text-center text-xs text-slate-500 shadow-sm">
+                <div className="mt-6 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 px-6 py-8 text-center text-xs text-slate-500 dark:text-slate-400 shadow-sm">
                   Loading your tasks...
                 </div>
               )}
 
               {!isLoading && loadError && (
-                <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 px-6 py-4 text-xs text-red-600">
+                <div className="mt-6 rounded-2xl border border-red-100 dark:border-red-900 bg-red-50 dark:bg-red-950 px-6 py-4 text-xs text-red-600 dark:text-red-400">
                   {loadError}
                 </div>
               )}
@@ -760,7 +677,7 @@ export default function DashboardPage() {
                 ))}
 
               {!isLoading && !loadError && filteredTasks.length === 0 && (
-                <div className="mt-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-8 text-center text-xs text-slate-500">
+                <div className="mt-6 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/80 px-6 py-8 text-center text-xs text-slate-500 dark:text-slate-400">
                   No tasks match your current filters. Try adjusting your search
                   or create a new task to get started.
                 </div>

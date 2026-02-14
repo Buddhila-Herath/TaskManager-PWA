@@ -1,6 +1,7 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "../contexts/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,19 +13,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const viewport: Viewport = {
-  themeColor: "#000000",
-};
-
 export const metadata: Metadata = {
-  title: "Task Manager PWA",
-  description: "Real-Time Task Management Progressive Web Application",
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "TaskManager",
-  },
+  title: "TaskFlow - Task Management PWA",
+  description: "Real-time task management for busy professionals",
 };
 
 export default function RootLayout({
@@ -33,11 +24,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

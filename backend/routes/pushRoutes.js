@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.use(protect);
 
+// Save or update a push subscription for the current user
 router.post("/subscribe", async (req, res) => {
   const { subscription } = req.body;
   const userId = req.user.id;
@@ -34,6 +35,7 @@ router.post("/subscribe", async (req, res) => {
   }
 });
 
+// Remove a subscription for the current user
 router.delete("/unsubscribe", async (req, res) => {
   const { endpoint } = req.body;
   const userId = req.user.id;

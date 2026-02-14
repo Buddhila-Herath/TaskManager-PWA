@@ -100,7 +100,5 @@ const startTaskReminderScheduler = () => {
 
 module.exports = {
   startTaskReminderScheduler,
-  // Exported for unit testing
-  parsePositiveInt,
 };
 

@@ -44,6 +44,7 @@ exports.createTask = async (req, res) => {
     emitToUser(req, "task_created", task);
 
     // Fire-and-forget push notification
+    // eslint-disable-next-line no-console
     console.log("[push] createTask: sending push for task", {
       userId,
       taskId: task._id.toString(),
@@ -72,6 +73,9 @@ exports.getTasks = async (req, res) => {
   const userId = req.user.id;
 
   try {
+    // For the standard tasks API, always return only the
+    // current user's tasks, even if the user is an admin.
+    // Admins can still see all tasks via the dedicated admin endpoints.
     const tasks = await Task.find({ user: userId }).sort({ updatedAt: -1 });
     res.json(tasks);
   } catch (err) {
@@ -113,7 +117,11 @@ exports.updateTask = async (req, res) => {
 
     emitToUser(req, "task_updated", task);
 
+    // Fire-and-forget push notification for generic task updates.
+    // We send a dedicated notification when a task is marked as completed below,
+    // so this generic "updated" notification is only used for non-completed states.
     if (task.status !== "Completed") {
+      // eslint-disable-next-line no-console
       console.log("[push] updateTask: sending generic update push", {
         userId,
         taskId: task._id.toString(),

@@ -27,55 +27,47 @@ const urlBase64ToUint8Array = (base64String: string): Uint8Array => {
 export const subscribeToPush = async (): Promise<void> => {
   if (!isPushSupported()) {
     // eslint-disable-next-line no-console
+    console.log("[push] Not supported in this browser");
     return;
   }
 
   if (!PUBLIC_VAPID_KEY) {
+    // Push is not configured; safely no-op on the client.
+    // eslint-disable-next-line no-console
+    console.log("[push] Missing NEXT_PUBLIC_VAPID_PUBLIC_KEY – skipping subscription");
     return;
   }
 
   const permission = await Notification.requestPermission();
   if (permission !== "granted") {
-    if (process.env.NODE_ENV !== "production") {
-      // eslint-disable-next-line no-console
-      console.log("[push] Notification permission not granted:", permission);
-    }
+    // eslint-disable-next-line no-console
+    console.log("[push] Notification permission not granted:", permission);
     return;
   }
 
-  if (process.env.NODE_ENV !== "production") {
-    // eslint-disable-next-line no-console
-    console.log("[push] Registering service worker /sw.js");
-  }
+  // eslint-disable-next-line no-console
+  console.log("[push] Registering service worker /sw.js");
   const registration = await navigator.serviceWorker.register("/sw.js");
 
   let subscription = await registration.pushManager.getSubscription();
 
   if (!subscription) {
-    if (process.env.NODE_ENV !== "production") {
-      // eslint-disable-next-line no-console
-      console.log("[push] No existing subscription, creating a new one");
-    }
+    // eslint-disable-next-line no-console
+    console.log("[push] No existing subscription, creating a new one");
     const applicationServerKey = urlBase64ToUint8Array(PUBLIC_VAPID_KEY);
     subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: applicationServerKey as BufferSource,
     });
   } else {
-    if (process.env.NODE_ENV !== "production") {
-      // eslint-disable-next-line no-console
-      console.log("[push] Reusing existing push subscription");
-    }
+    // eslint-disable-next-line no-console
+    console.log("[push] Reusing existing push subscription");
   }
 
-  if (process.env.NODE_ENV !== "production") {
-    // eslint-disable-next-line no-console
-    console.log("[push] Sending subscription to backend /api/push/subscribe");
-  }
+  // eslint-disable-next-line no-console
+  console.log("[push] Sending subscription to backend /api/push/subscribe");
   await apiClient.post("/api/push/subscribe", { subscription });
-  if (process.env.NODE_ENV !== "production") {
-    // eslint-disable-next-line no-console
-    console.log("[push] Subscription successfully saved on backend");
-  }
+  // eslint-disable-next-line no-console
+  console.log("[push] Subscription successfully saved on backend");
 };
 
