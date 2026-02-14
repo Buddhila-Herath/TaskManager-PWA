@@ -12,19 +12,19 @@ interface TaskCardProps {
 }
 
 const priorityClasses: Record<Task["priority"], string> = {
-  Urgent: "bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400",
-  High: "bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400",
-  Medium: "bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400",
-  Low: "bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400",
+  Urgent: "bg-red-50 text-red-600",
+  High: "bg-amber-50 text-amber-600",
+  Medium: "bg-indigo-50 text-indigo-600",
+  Low: "bg-slate-50 text-slate-500",
 };
 
 const statusSelectClasses: Record<TaskStatus, string> = {
   pending:
-    "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800",
+    "border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 hover:bg-slate-100",
   "in-progress":
-    "border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-950 text-sky-600 dark:text-sky-400 hover:border-sky-300 dark:hover:border-sky-700 hover:bg-sky-100 dark:hover:bg-sky-900",
+    "border-sky-200 bg-sky-50 text-sky-600 hover:border-sky-300 hover:bg-sky-100",
   completed:
-    "border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900",
+    "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100",
 };
 
 const statusLabel: Record<TaskStatus, string> = {
@@ -43,7 +43,7 @@ function TaskCardComponent({
 
   return (
     <article
-      className="group cursor-pointer rounded-2xl border border-slate-100 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-100 dark:hover:border-indigo-900 hover:shadow-md sm:px-5"
+      className="group cursor-pointer rounded-2xl border border-slate-100 bg-white/90 px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-100 hover:shadow-md sm:px-5"
       onClick={() => onOpen(task)}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -60,7 +60,7 @@ function TaskCardComponent({
                     : "pending";
               onStatusChange(task, nextStatus);
             }}
-            className="mt-0.5 flex h-5 w-5 items-center justify-center rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 transition group-hover:border-indigo-200 dark:group-hover:border-indigo-800 group-hover:text-indigo-500 dark:group-hover:text-indigo-400"
+            className="mt-0.5 flex h-5 w-5 items-center justify-center rounded border border-slate-300 bg-white text-slate-400 transition group-hover:border-indigo-200 group-hover:text-indigo-500"
             aria-label="Change task status"
           >
             {isCompleted ? (
@@ -78,12 +78,13 @@ function TaskCardComponent({
             className="min-w-0 text-left"
           >
             <h2
-              className={`truncate text-sm font-semibold ${isCompleted ? "text-slate-400 dark:text-slate-600 line-through" : "text-slate-900 dark:text-slate-100"
-                }`}
+              className={`truncate text-sm font-semibold ${
+                isCompleted ? "text-slate-400 line-through" : "text-slate-900"
+              }`}
             >
               {task.title}
             </h2>
-            <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-1 line-clamp-2 text-xs text-slate-500">
               {task.description}
             </p>
           </button>
@@ -110,7 +111,7 @@ function TaskCardComponent({
             >
               {task.priority}
             </span>
-            <span className="rounded-full bg-slate-50 dark:bg-slate-900 px-2 py-0.5 font-medium text-slate-500 dark:text-slate-400">
+            <span className="rounded-full bg-slate-50 px-2 py-0.5 font-medium text-slate-500">
               {dueLabel}
             </span>
           </div>

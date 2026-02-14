@@ -47,18 +47,18 @@ export function TaskModal({
   const descriptionLength = values.description.length;
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/30 dark:bg-slate-950/60 px-4 py-6 backdrop-blur-sm">
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/30 px-4 py-6 backdrop-blur-sm">
       <div
         role="dialog"
         aria-modal="true"
-        className="w-full max-w-xl rounded-3xl bg-white dark:bg-slate-900 p-6 shadow-2xl sm:p-7"
+        className="w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl sm:p-7"
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+            <h2 className="text-base font-semibold text-slate-900">
               {mode === "create" ? "Add Task" : "Edit Task"}
             </h2>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-xs text-slate-500">
               {mode === "create"
                 ? "Create a new task and keep your work organized."
                 : "Update task details, adjust priority, or change the due date."}
@@ -67,7 +67,7 @@ export function TaskModal({
           <button
             type="button"
             onClick={onCancel}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 transition hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-700 dark:hover:text-slate-300"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
             aria-label="Close"
           >
             ×
@@ -78,7 +78,7 @@ export function TaskModal({
           <div>
             <label
               htmlFor="taskTitle"
-              className="flex items-center justify-between text-xs font-medium text-slate-700 dark:text-slate-300"
+              className="flex items-center justify-between text-xs font-medium text-slate-700"
             >
               <span>
                 Task Title <span className="text-red-500">*</span>
@@ -92,10 +92,11 @@ export function TaskModal({
               type="text"
               value={values.title}
               onChange={(event) => onFieldChange("title", event.target.value)}
-              className={`mt-1 w-full rounded-xl border px-3 py-2 text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-sm outline-none transition focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950 ${errors.title
-                  ? "border-red-300 dark:border-red-700 focus:border-red-400 dark:focus:border-red-600"
-                  : "border-slate-200 dark:border-slate-700 focus:border-indigo-400 dark:focus:border-indigo-600"
-                }`}
+              className={`mt-1 w-full rounded-xl border px-3 py-2 text-sm shadow-sm outline-none transition focus:ring-2 focus:ring-indigo-100 ${
+                errors.title
+                  ? "border-red-300 focus:border-red-400"
+                  : "border-slate-200 focus:border-indigo-400"
+              }`}
               placeholder="Enter a clear task title"
             />
             {errors.title && (
@@ -106,7 +107,7 @@ export function TaskModal({
           <div>
             <label
               htmlFor="taskDescription"
-              className="text-xs font-medium text-slate-700 dark:text-slate-300"
+              className="text-xs font-medium text-slate-700"
             >
               Description
             </label>
@@ -116,7 +117,7 @@ export function TaskModal({
               onChange={(event) =>
                 onFieldChange("description", event.target.value)
               }
-              className="mt-1 h-24 w-full resize-none rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 shadow-sm outline-none transition focus:border-indigo-400 dark:focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950"
+              className="mt-1 h-24 w-full resize-none rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
               placeholder="Add more context, links, or steps for this task"
             />
             <div className="mt-1 flex justify-end text-[10px] text-slate-400">
@@ -128,7 +129,7 @@ export function TaskModal({
             <div>
               <label
                 htmlFor="taskPriority"
-                className="text-xs font-medium text-slate-700 dark:text-slate-300"
+                className="text-xs font-medium text-slate-700"
               >
                 Priority
               </label>
@@ -139,7 +140,7 @@ export function TaskModal({
                   onChange={(event) =>
                     onFieldChange("priority", event.target.value as TaskPriority)
                   }
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 shadow-sm outline-none transition focus:border-indigo-400 dark:focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
                 >
                   <option value="Low">Low Priority</option>
                   <option value="Medium">Medium Priority</option>
@@ -152,7 +153,7 @@ export function TaskModal({
             <div>
               <label
                 htmlFor="taskDueDate"
-                className="text-xs font-medium text-slate-700 dark:text-slate-300"
+                className="text-xs font-medium text-slate-700"
               >
                 Due Date
               </label>
@@ -164,7 +165,7 @@ export function TaskModal({
                   onChange={(event) =>
                     onFieldChange("dueDate", event.target.value)
                   }
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 shadow-sm outline-none transition focus:border-indigo-400 dark:focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 shadow-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
                 />
               </div>
             </div>
@@ -175,7 +176,7 @@ export function TaskModal({
               <button
                 type="button"
                 onClick={onDelete}
-                className="text-xs font-medium text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300"
+                className="text-xs font-medium text-red-500 hover:text-red-600"
               >
                 Delete Task
               </button>
@@ -184,7 +185,7 @@ export function TaskModal({
               <button
                 type="button"
                 onClick={onCancel}
-                className="rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 shadow-sm transition hover:border-slate-300 dark:hover:border-slate-600 hover:text-slate-900 dark:hover:text-slate-100"
+                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-900"
               >
                 Cancel
               </button>

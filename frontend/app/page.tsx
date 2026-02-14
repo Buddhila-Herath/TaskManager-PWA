@@ -182,29 +182,29 @@ export default function AuthPage() {
     [
       "w-1/2 pb-3 text-center text-sm font-medium cursor-pointer border-b-2 transition-colors",
       activeTab === tab
-        ? "border-indigo-500 text-indigo-600 dark:text-indigo-400"
-        : "border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300",
+        ? "border-indigo-500 text-indigo-600"
+        : "border-transparent text-gray-500 hover:text-gray-700",
     ].join(" ");
 
-  const labelClass = "block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1";
+  const labelClass = "block text-sm font-medium text-gray-700 mb-1";
   const inputClass =
-    "w-full rounded-lg border border-black-600 dark:border-slate-700 px-3 py-2 text-sm shadow-sm focus:border-black-700 dark:focus:border-indigo-600 focus:outline-none focus:ring-1 focus:ring-black-700 dark:focus:ring-indigo-600 text-gray-800 dark:text-slate-200 bg-white dark:bg-slate-800 placeholder-gray-400 dark:placeholder-slate-500";
+    "w-full rounded-lg border border-black-600 px-3 py-2 text-sm shadow-sm focus:border-black-700 focus:outline-none focus:ring-1 focus:ring-black-700 text-gray-800 placeholder-gray-400";
   const errorTextClass = "mt-1 text-xs text-red-500";
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 px-4 py-10">
-      <div className="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 p-8 shadow-xl ring-1 ring-black/5 dark:ring-white/5">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-slate-50 px-4 py-10">
+      <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-xl ring-1 ring-black/5">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600">
             <span className="text-xl">✓</span>
           </div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-slate-100">TaskFlow</h1>
-          <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
+          <h1 className="text-xl font-semibold text-gray-900">TaskFlow</h1>
+          <p className="mt-1 text-xs text-gray-500">
             Real-time task management for busy professionals
           </p>
         </div>
 
-        <div className="mb-6 flex border-b border-gray-200 dark:border-slate-700 text-sm">
+        <div className="mb-6 flex border-b border-gray-200 text-sm">
           <button
             type="button"
             className={tabClass("login")}
@@ -264,7 +264,7 @@ export default function AuthPage() {
 
             <div>
               <label className={labelClass} htmlFor="email">
-                Email Addressdd<span className="text-red-500"> *</span>
+                Email Address<span className="text-red-500"> *</span>
               </label>
               <input
                 id="email"
@@ -398,7 +398,7 @@ export default function AuthPage() {
           <form className="space-y-4" onSubmit={handleLoginSubmit}>
             <div>
               <label className={labelClass} htmlFor="loginEmail">
-                Email Addressdd<span className="text-red-500"> *</span>
+                Email Address<span className="text-red-500"> *</span>
               </label>
               <input
                 id="loginEmail"
