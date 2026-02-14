@@ -34,15 +34,15 @@ export function ConfirmDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 py-6 backdrop-blur-sm">
-      <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-black/5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 dark:bg-black/50 px-4 py-6 backdrop-blur-sm">
+      <div className="w-full max-w-sm rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
         <div className="mb-3 flex items-start gap-3">
-          <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-red-50 text-red-500">
+          <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/40 text-red-500 dark:text-red-400">
             !
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
-            <p className="mt-1 text-xs text-slate-500">{description}</p>
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{description}</p>
           </div>
         </div>
 
@@ -50,14 +50,14 @@ export function ConfirmDialog({
           <button
             type="button"
             onClick={handleCancel}
-            className="rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-900"
+            className="rounded-full border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 shadow-sm transition hover:border-slate-300 hover:text-slate-900 dark:hover:border-slate-500 dark:hover:text-slate-100"
           >
             {cancelLabel}
           </button>
           <button
             type="button"
             onClick={handleConfirm}
-            className="rounded-full bg-red-500 px-4 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-red-600"
+            className="rounded-full bg-red-500 px-4 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-red-600 dark:hover:bg-red-600"
           >
             {confirmLabel}
           </button>
