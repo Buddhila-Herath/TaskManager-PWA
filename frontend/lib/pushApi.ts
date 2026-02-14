@@ -57,7 +57,7 @@ export const subscribeToPush = async (): Promise<void> => {
     const applicationServerKey = urlBase64ToUint8Array(PUBLIC_VAPID_KEY);
     subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey,
+      applicationServerKey: applicationServerKey as BufferSource,
     });
   } else {
     // eslint-disable-next-line no-console
