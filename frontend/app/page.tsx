@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginUser, registerUser } from "../lib/authApi";
 import { ADMIN_DASHBOARD_ROUTE, DASHBOARD_ROUTE } from "../lib/constants";
+import { useTheme } from "../contexts/ThemeContext";
+import { ThemeToggle } from "../components/ThemeToggle";
 
 type ActiveTab = "login" | "register";
 
@@ -13,6 +15,7 @@ interface FieldErrors {
 
 export default function AuthPage() {
   const router = useRouter();
+  const { cn } = useTheme();
   const [activeTab, setActiveTab] = useState<ActiveTab>("login");
 
   const [registerForm, setRegisterForm] = useState({
@@ -179,32 +182,42 @@ export default function AuthPage() {
   };
 
   const tabClass = (tab: ActiveTab) =>
-    [
-      "w-1/2 pb-3 text-center text-sm font-medium cursor-pointer border-b-2 transition-colors",
-      activeTab === tab
-        ? "border-indigo-500 text-indigo-600"
-        : "border-transparent text-gray-500 hover:text-gray-700",
-    ].join(" ");
+    cn(
+      [
+        "w-1/2 pb-3 text-center text-sm font-medium cursor-pointer border-b-2 transition-colors",
+        activeTab === tab
+          ? "border-indigo-500 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
+          : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300",
+      ].join(" "),
+    );
 
-  const labelClass = "block text-sm font-medium text-gray-700 mb-1";
-  const inputClass =
-    "w-full rounded-lg border border-black-600 px-3 py-2 text-sm shadow-sm focus:border-black-700 focus:outline-none focus:ring-1 focus:ring-black-700 text-gray-800 placeholder-gray-400";
+  const labelClass = cn(
+    "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1",
+  );
+  const inputClass = cn(
+    "w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-slate-800",
+  );
   const errorTextClass = "mt-1 text-xs text-red-500";
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-slate-50 px-4 py-10">
-      <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-xl ring-1 ring-black/5">
+    <div className={cn("flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 px-4 py-10")}>
+      <div className={cn("relative w-full max-w-md rounded-3xl bg-white dark:bg-slate-800 p-8 pr-14 shadow-xl ring-1 ring-black/5 dark:ring-white/10")}>
+        <div className="absolute right-4 top-4">
+          <ThemeToggle />
+        </div>
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600">
+          <div className={cn("mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400")}>
             <span className="text-xl">✓</span>
           </div>
-          <h1 className="text-xl font-semibold text-gray-900">TaskFlow</h1>
-          <p className="mt-1 text-xs text-gray-500">
+          <h1 className={cn("text-xl font-semibold text-gray-900 dark:text-white")}>
+            TaskFlow
+          </h1>
+          <p className={cn("mt-1 text-xs text-gray-500 dark:text-gray-400")}>
             Real-time task management for busy professionals
           </p>
         </div>
 
-        <div className="mb-6 flex border-b border-gray-200 text-sm">
+        <div className={cn("mb-6 flex border-b border-gray-200 dark:border-gray-600 text-sm")}>
           <button
             type="button"
             className={tabClass("login")}
@@ -229,10 +242,10 @@ export default function AuthPage() {
 
         {globalMessage && (
           <div
-            className={`mb-4 rounded-lg px-3 py-2 text-xs ${globalMessageType === "success"
-              ? "bg-emerald-50 text-emerald-700"
-              : "bg-red-50 text-red-700"
-              }`}
+            className={cn(`mb-4 rounded-lg px-3 py-2 text-xs ${globalMessageType === "success"
+              ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+              : "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+              }`)}
           >
             {globalMessage}
           </div>
@@ -242,7 +255,7 @@ export default function AuthPage() {
           <form className="space-y-4" onSubmit={handleRegisterSubmit}>
             <div>
               <label className={labelClass} htmlFor="fullName">
-                Full Namefd<span className="text-red-500"> *</span>
+                Full Name<span className="text-red-500"> *</span>
               </label>
               <input
                 id="fullName"
@@ -358,7 +371,7 @@ export default function AuthPage() {
               <input
                 id="acceptTerms"
                 type="checkbox"
-                className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                className={cn("mt-1 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-slate-800")}
                 checked={registerForm.acceptTerms}
                 onChange={(e) =>
                   setRegisterForm((prev) => ({
@@ -369,7 +382,7 @@ export default function AuthPage() {
               />
               <label
                 htmlFor="acceptTerms"
-                className="text-xs text-gray-500 leading-snug"
+                className={cn("text-xs text-gray-500 dark:text-gray-400 leading-snug")}
               >
                 I agree to{" "}
                 <span className="font-medium text-indigo-600">
@@ -438,16 +451,16 @@ export default function AuthPage() {
             </div>
 
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-xs text-gray-500">
+              <label className={cn("flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400")}>
                 <input
                   type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  className={cn("h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-slate-800")}
                 />
                 Remember me
               </label>
               <button
                 type="button"
-                className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
+                className={cn("text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300")}
               >
                 Forgot Password?
               </button>

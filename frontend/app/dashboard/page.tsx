@@ -38,6 +38,8 @@ import { logoutUser, type AuthUser } from "../../lib/authApi";
 import { API_BASE_URL } from "../../lib/constants";
 import { subscribeToPush } from "../../lib/pushApi";
 import { registerServiceWorker } from "../../lib/swRegistration";
+import { useTheme } from "../../contexts/ThemeContext";
+import { ThemeToggle } from "../../components/ThemeToggle";
 
 const NAV_ITEMS = [
   { id: "my-tasks", label: "All Tasks", icon: LayoutList },
@@ -47,6 +49,7 @@ const NAV_ITEMS = [
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { cn } = useTheme();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [activeNavId, setActiveNavId] = useState<(typeof NAV_ITEMS)[number]["id"]>(
@@ -413,14 +416,14 @@ export default function DashboardPage() {
     }, [activeNavId, searchTerm, tasks]);
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900">
+    <div className={cn("flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100")}>
       {toast && (
         <div className="pointer-events-none fixed right-4 top-4 z-50 flex max-w-xs flex-col gap-2">
           <div
-            className={`pointer-events-auto flex items-start gap-3 rounded-2xl border px-4 py-3 text-xs shadow-lg ${toast.type === "success"
-              ? "border-emerald-100 bg-emerald-50/95 text-emerald-800"
-              : "border-red-100 bg-red-50/95 text-red-700"
-              }`}
+            className={cn(`pointer-events-auto flex items-start gap-3 rounded-2xl border px-4 py-3 text-xs shadow-lg ${toast.type === "success"
+              ? "border-emerald-100 dark:border-emerald-800 bg-emerald-50/95 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-200"
+              : "border-red-100 dark:border-red-800 bg-red-50/95 dark:bg-red-900/80 text-red-700 dark:text-red-200"
+              }`)}
           >
             <div className="mt-0.5">
               {toast.type === "success" ? (
@@ -438,7 +441,7 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={() => setToast(null)}
-              className="ml-1 rounded-full px-1.5 py-0.5 text-[11px] font-medium text-slate-400 transition hover:bg-white/60 hover:text-slate-600"
+              className={cn("ml-1 rounded-full px-1.5 py-0.5 text-[11px] font-medium text-slate-400 dark:text-slate-500 transition hover:bg-white/60 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300")}
             >
               ×
             </button>
@@ -448,22 +451,22 @@ export default function DashboardPage() {
       {/* Mobile sidebar / nav */}
       {isMobileNavOpen && (
         <div className="fixed inset-0 z-30 flex md:hidden">
-          <div className="flex w-64 min-w-0 shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white/95 backdrop-blur-sm">
+          <div className={cn("flex w-64 min-w-0 shrink-0 flex-col overflow-hidden border-r border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-800 backdrop-blur-sm")}>
             <div className="flex items-center justify-between px-4 py-4">
               <div className="flex items-center gap-2">
                 <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md">
                   <CheckSquare2 className="h-4 w-4" />
                 </div>
                 <div className="leading-tight">
-                  <p className="text-sm font-semibold text-slate-900">TaskFlow</p>
-                  <p className="text-[11px] text-slate-400">PWA</p>
+                  <p className={cn("text-sm font-semibold text-slate-900 dark:text-slate-100")}>TaskFlow</p>
+                  <p className={cn("text-[11px] text-slate-400 dark:text-slate-500")}>PWA</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsMobileNavOpen(false)}
                 aria-label="Close navigation"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
+                className={cn("inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-400 transition hover:border-slate-300 hover:text-slate-700 dark:hover:border-slate-500 dark:hover:text-slate-200")}
               >
                 ×
               </button>
@@ -481,14 +484,13 @@ export default function DashboardPage() {
                       setActiveNavId(item.id);
                       setIsMobileNavOpen(false);
                     }}
-                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 transition-colors ${isActive
-                      ? "bg-indigo-50 text-indigo-700"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                      }`}
+                    className={cn(`flex w-full items-center gap-3 rounded-xl px-3 py-2 transition-colors ${isActive
+                      ? "bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/80 hover:text-slate-900 dark:hover:text-slate-100"
+                      }`)}
                   >
                     <Icon
-                      className={`h-4 w-4 ${isActive ? "text-indigo-600" : "text-slate-400"
-                        }`}
+                      className={cn(`${isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 dark:text-slate-500"} h-4 w-4`)}
                     />
                     <span>{item.label}</span>
                   </button>
@@ -496,16 +498,16 @@ export default function DashboardPage() {
               })}
             </nav>
 
-            <div className="border-t border-slate-200 px-4 py-4">
+            <div className={cn("border-t border-slate-200 dark:border-slate-700 px-4 py-4")}>
               <button
                 type="button"
                 onClick={() => {
                   setIsMobileNavOpen(false);
                   handleLogout();
                 }}
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
+                className={cn("flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900/30")}
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-xs font-semibold text-red-700">
+                <div className={cn("flex h-8 w-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50 text-xs font-semibold text-red-700 dark:text-red-300")}>
                   <LogOut className="h-4 w-4" />
                 </div>
                 <span>Logout</span>
@@ -514,7 +516,7 @@ export default function DashboardPage() {
           </div>
           <button
             type="button"
-            className="flex-1 bg-slate-900/40"
+            className={cn("flex-1 bg-slate-900/40 dark:bg-black/50")}
             onClick={() => setIsMobileNavOpen(false)}
             aria-label="Close navigation overlay"
           />
@@ -522,8 +524,8 @@ export default function DashboardPage() {
       )}
       {/* Sidebar */}
       <aside
-        className={`hidden border-r border-slate-200 bg-white/80 backdrop-blur-sm transition-all duration-300 ease-in-out md:flex md:flex-col ${isSidebarCollapsed ? "w-20" : "w-64"
-          }`}
+        className={cn(`hidden border-r border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800 backdrop-blur-sm transition-all duration-300 ease-in-out md:flex md:flex-col ${isSidebarCollapsed ? "w-20" : "w-64"
+          }`)}
       >
         <div className="flex items-center justify-between px-4 py-4">
           <div className="flex items-center gap-2">
@@ -532,8 +534,8 @@ export default function DashboardPage() {
             </div>
             {!isSidebarCollapsed && (
               <div className="leading-tight">
-                <p className="text-sm font-semibold text-slate-900">TaskFlow</p>
-                <p className="text-[11px] text-slate-400">PWA</p>
+                <p className={cn("text-sm font-semibold text-slate-900 dark:text-slate-100")}>TaskFlow</p>
+                <p className={cn("text-[11px] text-slate-400 dark:text-slate-500")}>PWA</p>
               </div>
             )}
           </div>
@@ -541,7 +543,7 @@ export default function DashboardPage() {
             type="button"
             onClick={() => setIsSidebarCollapsed((prev) => !prev)}
             aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:text-indigo-600"
+            className={cn("inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-400 transition hover:border-indigo-200 hover:text-indigo-600 dark:hover:border-indigo-500 dark:hover:text-indigo-400")}
           >
             <Menu className="h-4 w-4" />
           </button>
@@ -556,13 +558,13 @@ export default function DashboardPage() {
                 key={item.id}
                 type="button"
                 onClick={() => setActiveNavId(item.id)}
-                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 transition-colors ${isActive
-                  ? "bg-indigo-50 text-indigo-700"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                  }`}
+                className={cn(`flex w-full items-center gap-3 rounded-xl px-3 py-2 transition-colors ${isActive
+                  ? "bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/80 hover:text-slate-900 dark:hover:text-slate-100"
+                  }`)}
               >
                 <Icon
-                  className={`h-4 w-4 ${isActive ? "text-indigo-600" : "text-slate-400"}`}
+                  className={cn(`h-4 w-4 ${isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 dark:text-slate-500"}`)}
                 />
                 {!isSidebarCollapsed && <span>{item.label}</span>}
               </button>
@@ -570,13 +572,13 @@ export default function DashboardPage() {
           })}
         </nav>
 
-        <div className="border-t border-slate-200 px-4 py-4">
+        <div className={cn("border-t border-slate-200 dark:border-slate-700 px-4 py-4")}>
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
+            className={cn("flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900/30")}
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 text-xs font-semibold text-red-700">
+            <div className={cn("flex h-8 w-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50 text-xs font-semibold text-red-700 dark:text-red-300")}>
               <LogOut className="h-4 w-4" />
             </div>
             {!isSidebarCollapsed && <span>Logout</span>}
@@ -587,52 +589,56 @@ export default function DashboardPage() {
       {/* Main content */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-slate-200 bg-white/70 px-4 py-3 backdrop-blur-sm md:px-6">
-          <div className="flex items-center gap-3 md:hidden">
+        <header className={cn("flex min-w-0 items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-800 px-3 py-3 backdrop-blur-sm sm:px-4 md:px-6")}>
+          <div className="flex min-w-0 flex-1 items-center gap-2 md:flex-initial md:gap-3">
             <button
               type="button"
               onClick={() => setIsMobileNavOpen(true)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm"
+              className={cn("inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 shadow-sm")}
               aria-label="Toggle navigation"
             >
               <Menu className="h-4 w-4" />
             </button>
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md">
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md">
                 <CheckSquare2 className="h-4 w-4" />
               </div>
-              <div className="leading-tight">
-                <p className="text-sm font-semibold text-slate-900">TaskFlow</p>
-                <p className="text-[11px] text-slate-400">PWA</p>
+              <div className="min-w-0 leading-tight">
+                <p className={cn("truncate text-sm font-semibold text-slate-900 dark:text-slate-100")}>TaskFlow</p>
+                <p className={cn("text-[11px] text-slate-400 dark:text-slate-500")}>PWA</p>
               </div>
             </div>
           </div>
 
-          <div className="hidden items-center gap-2 md:flex">
-            <span className="text-xs font-medium text-slate-500">Workspace</span>
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+          <div className="hidden min-w-0 items-center gap-2 md:flex">
+            <span className={cn("text-xs font-medium text-slate-500 dark:text-slate-400")}>Workspace</span>
+            <span className={cn("rounded-full bg-slate-100 dark:bg-slate-700 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-300")}>
               My Tasks
             </span>
           </div>
 
-          <div className="flex items-center gap-5">
-            <div className="flex items-center gap-1 text-xs text-emerald-600">
+          <div className="flex min-w-0 flex-shrink-0 items-center gap-2 sm:gap-5">
+            <div className="flex-shrink-0">
+              <ThemeToggle />
+            </div>
+            <div className={cn("flex min-w-0 items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400")}>
               <span
-                className={`h-2 w-2 rounded-full ${isRealtimeConnected ? "bg-emerald-500" : "bg-slate-300"
-                  }`}
+                className={cn(`h-2 w-2 rounded-full ${isRealtimeConnected ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"
+                  }`)}
               />
-              <span className="font-medium">
+              <span className="font-medium whitespace-nowrap">
                 {isRealtimeConnected ? "Synced" : "Connecting"}
               </span>
-              <span className="text-slate-400">
+              <span className={cn("text-slate-400 dark:text-slate-500 max-sm:hidden")}>
                 {isRealtimeConnected ? "• Online" : "• Realtime"}
               </span>
             </div>
-            <div className="hidden h-8 w-px bg-slate-200 md:block" />
+            <div className={cn("hidden h-8 w-px bg-slate-200 dark:bg-slate-600 md:block")} />
             <button
               type="button"
               onClick={handleProfileClick}
-              className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-xs font-semibold text-white"
+              className="flex h-8 w-8 min-w-[2rem] flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-xs font-semibold text-white"
+              aria-label="Profile"
             >
               {authUser?.avatarUrl ? (
                 <img
@@ -653,24 +659,24 @@ export default function DashboardPage() {
             {/* Page title row */}
             <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
               <div>
-                <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">
+                <h1 className={cn("text-xl font-semibold text-slate-900 dark:text-slate-100 sm:text-2xl")}>
                   My Tasks
                 </h1>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className={cn("mt-1 text-xs text-slate-500 dark:text-slate-400")}>
                   {pendingCount} pending, {inProgressCount} in progress,{" "}
                   {completedCount} completed
                 </p>
               </div>
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <div className="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1">
-                  <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                  <span className="font-medium text-emerald-700">
+              <div className={cn("flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400")}>
+                <div className={cn("flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-900/40 px-2 py-1")}>
+                  <CheckCircle2 className={cn("h-3 w-3 text-emerald-500 dark:text-emerald-400")} />
+                  <span className={cn("font-medium text-emerald-700 dark:text-emerald-300")}>
                     {completedCount} Done
                   </span>
                 </div>
-                <div className="flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-1">
-                  <Circle className="h-3 w-3 text-indigo-500" />
-                  <span className="font-medium text-indigo-700">
+                <div className={cn("flex items-center gap-1 rounded-full bg-indigo-50 dark:bg-indigo-900/40 px-2 py-1")}>
+                  <Circle className={cn("h-3 w-3 text-indigo-500 dark:text-indigo-400")} />
+                  <span className={cn("font-medium text-indigo-700 dark:text-indigo-300")}>
                     {activeCount} Active
                   </span>
                 </div>
@@ -683,36 +689,36 @@ export default function DashboardPage() {
             >
               <div className="min-w-0 flex-1">
                 <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Search className={cn("pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500")} />
                   <input
                     type="search"
                     placeholder="Search tasks by title or description..."
                     value={searchTerm}
                     onChange={(event) => setSearchTerm(event.target.value)}
-                    className="w-full min-w-0 rounded-full border border-slate-200 bg-white px-9 py-2 text-xs text-slate-800 shadow-sm outline-none ring-0 transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                    className={cn("w-full min-w-0 rounded-full border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-9 py-2 text-xs text-slate-800 dark:text-slate-200 shadow-sm outline-none ring-0 transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900/50 placeholder:text-slate-400 dark:placeholder:text-slate-500")}
                   />
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 self-end sm:self-auto">
+              <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto">
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700"
+                  className={cn("inline-flex min-h-[2.25rem] items-center gap-1 rounded-full border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700 dark:hover:border-indigo-500 dark:hover:text-indigo-300")}
                 >
-                  <SortAsc className="h-3.5 w-3.5" />
+                  <SortAsc className="h-3.5 w-3.5 shrink-0" />
                   <span>Sort</span>
                 </button>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700"
+                  className={cn("inline-flex min-h-[2.25rem] items-center gap-1 rounded-full border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700 dark:hover:border-indigo-500 dark:hover:text-indigo-300")}
                 >
-                  <Search className="h-3.5 w-3.5" />
+                  <Search className="h-3.5 w-3.5 shrink-0" />
                   <span>Filters</span>
                 </button>
                 <button
                   type="button"
                   onClick={openCreateModal}
-                  className="inline-flex items-center gap-1 rounded-full bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-indigo-700"
+                  className={cn("inline-flex min-h-[2.25rem] items-center gap-1 rounded-full bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-indigo-700 dark:hover:bg-indigo-500")}
                 >
                   <span className="text-base leading-none">+</span>
                   <span>New Task</span>
@@ -723,7 +729,7 @@ export default function DashboardPage() {
             {/* Tasks list */}
             <section className="space-y-3">
               {!isLoading && !loadError && filteredTasks.length > 0 && (
-                <div className="mt-2 hidden items-center justify-between px-1 text-[11px] font-medium text-slate-400 sm:flex">
+                <div className={cn("mt-2 hidden items-center justify-between px-1 text-[11px] font-medium text-slate-400 dark:text-slate-500 sm:flex")}>
                   <span className="flex-1 pl-9">Task</span>
                   <div className="flex w-56 justify-end gap-3 pr-1">
                     <span className="w-20 text-right">Status</span>
@@ -734,13 +740,13 @@ export default function DashboardPage() {
               )}
 
               {isLoading && (
-                <div className="mt-6 rounded-2xl border border-slate-100 bg-white/90 px-6 py-8 text-center text-xs text-slate-500 shadow-sm">
+                <div className={cn("mt-6 rounded-2xl border border-slate-100 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 px-6 py-8 text-center text-xs text-slate-500 dark:text-slate-400 shadow-sm")}>
                   Loading your tasks...
                 </div>
               )}
 
               {!isLoading && loadError && (
-                <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 px-6 py-4 text-xs text-red-600">
+                <div className={cn("mt-6 rounded-2xl border border-red-100 dark:border-red-800 bg-red-50 dark:bg-red-900/30 px-6 py-4 text-xs text-red-600 dark:text-red-300")}>
                   {loadError}
                 </div>
               )}
@@ -760,7 +766,7 @@ export default function DashboardPage() {
                 ))}
 
               {!isLoading && !loadError && filteredTasks.length === 0 && (
-                <div className="mt-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-8 text-center text-xs text-slate-500">
+                <div className={cn("mt-6 rounded-2xl border border-dashed border-slate-200 dark:border-slate-600 bg-slate-50/80 dark:bg-slate-800/50 px-4 py-8 text-center text-xs text-slate-500 dark:text-slate-400 sm:px-6")}>
                   No tasks match your current filters. Try adjusting your search
                   or create a new task to get started.
                 </div>
